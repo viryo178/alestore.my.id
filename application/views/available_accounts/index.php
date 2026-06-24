@@ -1,0 +1,2 @@
+<div class="pagetitle"><h1>Stok Tersedia</h1></div>
+<div class="card"><div class="card-body"><h5 class="card-title">Akun Available</h5><table class="table datatable"><thead><tr><th>Produk</th><th>Email</th><th>Slot</th><th>Expired</th></tr></thead><tbody><?php foreach ($rows as $row): ?><tr><td><?= h($row->product_name); ?><br><small><?= h($row->variation); ?></small></td><td><?= h($row->email); ?></td><td><?= (int)$row->used_slot; ?>/<?= (int)$row->max_slot; ?></td><td><?= h($row->expired_at); ?></td></tr><?php endforeach; ?></tbody></table></div></div>

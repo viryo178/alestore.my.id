@@ -1,0 +1,2 @@
+<div class="pagetitle"><h1>Activity Logs</h1></div>
+<div class="card"><div class="card-body"><h5 class="card-title">Aktivitas</h5><table class="table datatable"><thead><tr><th>Admin</th><th>Aksi</th><th>Deskripsi</th><th>IP</th><th>Waktu</th></tr></thead><tbody><?php foreach ($rows as $row): ?><tr><td><?= h($row->admin_name); ?><br><small><?= h($row->admin_role); ?></small></td><td><?= h($row->action); ?></td><td><?= h($row->description); ?></td><td><?= h($row->ip_address); ?></td><td><?= h($row->created_at); ?></td></tr><?php endforeach; ?></tbody></table></div></div>
