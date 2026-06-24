@@ -26,7 +26,7 @@ date_default_timezone_set(APP_TIMEZONE);
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'https://ale.kesug.com';
+$config['base_url'] = 'https://alestore.my.id';
 
 /*
 |--------------------------------------------------------------------------

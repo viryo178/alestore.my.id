@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'sql113.infinityfree.com',
-	'username' => 'if0_42104294',
-	'password' => 'viryo12345678',
-	'database' => 'if0_42104294_alestore',
+	'hostname' => 'localhost',
+	'username' => 'alestore_alestore',
+	'password' => 'alestore@123456789',
+	'database' => 'alestore_aledatabase',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
