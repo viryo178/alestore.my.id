@@ -48,7 +48,20 @@ ksort($productNames);
     .digital-account-expired-row td{background:rgba(212,155,31,.10)!important;color:#f8fbff!important}
     .digital-account-expired-row td .small,.digital-account-expired-row td .text-muted{color:#9fb5d4!important}
     .stock-lines-input{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-    @media (max-width:767.98px){.digital-account-filter-row,.digital-account-table-row{align-items:stretch;flex-direction:column}.digital-account-filter-controls,.digital-account-actions{align-items:stretch}.datatable-filter-control,.datatable-search{min-width:100%}.account-method-grid{grid-template-columns:1fr}[id^="stockProductModal"] .modal-dialog,[id^="stockLicenseModal"] .modal-dialog{height:100%;margin:0;max-width:none}[id^="stockProductModal"] .modal-content,[id^="stockLicenseModal"] .modal-content{border-radius:0;display:flex;max-height:100vh;min-height:100vh}[id^="stockProductModal"] .modal-body,[id^="stockLicenseModal"] .modal-body{overflow-y:auto;padding-bottom:12px}[id^="stockProductModal"] .modal-footer,[id^="stockLicenseModal"] .modal-footer{background:#071b31!important;bottom:0;display:grid;gap:8px;grid-template-columns:1fr;position:sticky;z-index:2}[id^="stockProductModal"] .modal-footer .btn,[id^="stockLicenseModal"] .modal-footer .btn{margin:0;width:100%}[id^="stockProductModal"] .stock-lines-input,[id^="stockLicenseModal"] .stock-lines-input{min-height:150px;resize:vertical}}
+    @media (max-width:767.98px){
+        .digital-account-filter-row,.digital-account-table-row{align-items:stretch;flex-direction:column}
+        .digital-account-filter-controls,.digital-account-actions{align-items:stretch}
+        .datatable-filter-control,.datatable-search{min-width:100%}
+        .account-method-grid{grid-template-columns:1fr}
+        [id^="stockProductModal"] .modal-dialog,[id^="stockLicenseModal"] .modal-dialog{height:100dvh;margin:0;max-width:none}
+        [id^="stockProductModal"] .modal-content,[id^="stockLicenseModal"] .modal-content{border-radius:0;height:100dvh;max-height:100dvh;overflow:hidden}
+        [id^="stockProductModal"] form,[id^="stockLicenseModal"] form{display:flex;flex-direction:column;height:100%;min-height:0}
+        [id^="stockProductModal"] .modal-header,[id^="stockLicenseModal"] .modal-header{flex:0 0 auto}
+        [id^="stockProductModal"] .modal-body,[id^="stockLicenseModal"] .modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding-bottom:12px}
+        [id^="stockProductModal"] .modal-footer,[id^="stockLicenseModal"] .modal-footer{background:#071b31!important;display:grid;flex:0 0 auto;gap:8px;grid-template-columns:1fr;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+        [id^="stockProductModal"] .modal-footer .btn,[id^="stockLicenseModal"] .modal-footer .btn{margin:0;width:100%}
+        [id^="stockProductModal"] .stock-lines-input,[id^="stockLicenseModal"] .stock-lines-input{min-height:130px;resize:vertical}
+    }
 </style>
 
 <div class="pagetitle">
