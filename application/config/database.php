@@ -73,12 +73,25 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+if ( ! function_exists('db_env')) {
+	function db_env($key, $default = '')
+	{
+		$value = getenv($key);
+
+		return $value === false ? $default : $value;
+	}
+}
+
+$default_database = PHP_OS_FAMILY === 'Windows' ? 'alestore' : 'alestore_aledatabase';
+$default_username = PHP_OS_FAMILY === 'Windows' ? 'root' : 'alestore_user';
+$default_password = PHP_OS_FAMILY === 'Windows' ? '' : 'alestore@123456789';
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'alestore_user',
-	'password' => 'alestore@123456789',
-	'database' => 'alestore_aledatabase',
+	'hostname' => db_env('DB_HOST', 'localhost'),
+	'username' => db_env('DB_USERNAME', $default_username),
+	'password' => db_env('DB_PASSWORD', $default_password),
+	'database' => db_env('DB_DATABASE', $default_database),
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
