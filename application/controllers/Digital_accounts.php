@@ -313,24 +313,19 @@ class Digital_accounts extends MY_Controller
     {
         $this->output->set_content_type('application/json');
         $this->db->from('digital_accounts');
+        $this->apply_account_feed_filters();
 
-        if ($this->input->get('q')) {
-            $q = $this->input->get('q', true);
-            $this->db->group_start()->like('product_name', $q)->or_like('email', $q)->or_like('variation', $q)->group_end();
-        }
-        if ($this->input->get('account_type') && $this->input->get('account_type') !== 'all') {
-            $this->db->where('account_type', $this->input->get('account_type', true));
-        }
-        if ($this->input->get('status') && $this->input->get('status') !== 'all') {
-            $status = $this->input->get('status', true);
-            if ($status === 'sold') {
-                $this->db->where_in('status', array('sold', 'unavailable', 'unvailabel'));
-            } else {
-                $this->db->where('status', $status);
-            }
+        $perPage = $this->input->get('per_page', true) ?: '10';
+        $allowedPerPage = array('10', '25', '50', 'all');
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = '10';
         }
 
-        $accounts = $this->db->order_by('id', 'DESC')->limit(500)->get()->result();
+        if ($perPage !== 'all') {
+            $this->db->limit((int) $perPage);
+        }
+
+        $accounts = $this->db->order_by('id', 'DESC')->get()->result();
         $items = array();
         foreach ($accounts as $account) {
             $status = $this->normalize_account_status($account->status);
@@ -349,6 +344,8 @@ class Digital_accounts extends MY_Controller
                 'expired_warning' => $account->expired_at && strtotime($account->expired_at) <= strtotime('+2 days'),
                 'edit_modal' => 'editAccountModal'.$account->id,
                 'delete_modal' => 'deleteAccountModal'.$account->id,
+                'edit_url' => site_url('digital-accounts/edit/'.$account->id),
+                'delete_url' => site_url('digital-accounts/delete/'.$account->id),
             );
         }
 
@@ -363,6 +360,25 @@ class Digital_accounts extends MY_Controller
                 ->where_not_in('status', array('sold', 'deactived', 'no_access'))
                 ->count_all_results('digital_accounts'),
         ));
+    }
+
+    private function apply_account_feed_filters()
+    {
+        if ($this->input->get('q')) {
+            $q = $this->input->get('q', true);
+            $this->db->group_start()->like('product_name', $q)->or_like('email', $q)->or_like('variation', $q)->group_end();
+        }
+        if ($this->input->get('account_type') && $this->input->get('account_type') !== 'all') {
+            $this->db->where('account_type', $this->input->get('account_type', true));
+        }
+        if ($this->input->get('status') && $this->input->get('status') !== 'all') {
+            $status = $this->input->get('status', true);
+            if ($status === 'sold') {
+                $this->db->where_in('status', array('sold', 'unavailable', 'unvailabel'));
+            } else {
+                $this->db->where('status', $status);
+            }
+        }
     }
 
     private function account_data()

@@ -178,7 +178,7 @@ ksort($productNames);
                         </div>
                     </div>
                     <div class="digital-account-table-row">
-                        <div class="datatable-length"><select class="form-select form-select-sm"><option selected>10</option><option>25</option><option>50</option></select><span>entries per page</span></div>
+                        <div class="datatable-length"><select class="form-select form-select-sm" id="perPageFilter"><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="all">All</option></select><span>entries per page</span></div>
                         <div class="datatable-search"><input type="text" class="form-control" id="accountSearch" value="<?= h($this->input->get('q')); ?>" placeholder="Search..."></div>
                     </div>
                 </div>
@@ -307,6 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const search = document.getElementById('accountSearch');
     const type = document.getElementById('typeFilter');
     const status = document.getElementById('statusFilter');
+    const perPage = document.getElementById('perPageFilter');
     const total = document.getElementById('totalAccounts');
     const visibleRows = document.getElementById('visibleRows');
     const serverTime = document.getElementById('serverTime');
@@ -335,14 +336,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${escapeHtml(account.hpp)}</td>
                 <td><span class="badge ${escapeHtml(statusClass)}">${escapeHtml(labels[account.status] || account.status_label)}</span></td>
                 <td>${escapeHtml(account.expired_at || '-')}</td>
-                <td><button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${account.edit_modal}"><i class="bi bi-pencil"></i></button> <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#${account.delete_modal}"><i class="bi bi-trash"></i></button></td>
+                <td><a href="${escapeHtml(account.edit_url)}" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${account.edit_modal}"><i class="bi bi-pencil"></i></a> <a href="${escapeHtml(account.delete_url)}" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#${account.delete_modal}"><i class="bi bi-trash"></i></a></td>
             </tr>`;
         }).join('');
     }
 
     async function loadAccounts() {
-        if (!app || !tbody || !search || !type || !status) return;
-        const params = new URLSearchParams({q: search.value, account_type: type.value, status: status.value});
+        if (!app || !tbody || !search || !type || !status || !perPage) return;
+        const params = new URLSearchParams({q: search.value, account_type: type.value, status: status.value, per_page: perPage.value});
         const response = await fetch(`${app.dataset.feedUrl}?${params.toString()}`, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
         const data = await response.json();
         total.textContent = new Intl.NumberFormat('id-ID').format(data.total);
@@ -362,7 +363,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (search) search.addEventListener('input', queueLoad);
     if (type) type.addEventListener('change', loadAccounts);
     if (status) status.addEventListener('change', loadAccounts);
-    if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; loadAccounts(); });
+    if (perPage) perPage.addEventListener('change', loadAccounts);
+    if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; perPage.value = '10'; loadAccounts(); });
     loadAccounts();
     if (tbody) setInterval(loadAccounts, 5000);
 
