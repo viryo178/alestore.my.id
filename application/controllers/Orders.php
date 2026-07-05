@@ -130,8 +130,10 @@ class Orders extends MY_Controller
         if (empty($data['order_type'])) {
             $data['order_type'] = 'private';
         }
-        if ($this->input->post('expired_days', true) && empty($data['expired_at'])) {
-            $data['expired_at'] = date('Y-m-d H:i:s', strtotime('+'.(int) $this->input->post('expired_days', true).' days'));
+        if (!empty($data['expired_at'])) {
+            $data['expired_at'] = date('Y-m-d H:i:s', strtotime($data['expired_at']));
+        } else {
+            $data['expired_at'] = null;
         }
         $data['created_at'] = $this->posted_order_datetime();
         $data['user_id'] = (int) $this->session->userdata('user_id');
@@ -187,13 +189,7 @@ class Orders extends MY_Controller
         if (empty($data['account_max_user'])) {
             $data['account_max_user'] = 1;
         }
-        if (!empty($data['expired_at'])) {
-            $data['expired_at'] = date('Y-m-d H:i:s', strtotime($data['expired_at']));
-        } elseif ($this->input->post('expired_days', true)) {
-            $data['expired_at'] = date('Y-m-d H:i:s', strtotime('+'.(int) $this->input->post('expired_days', true).' days'));
-        } else {
-            $data['expired_at'] = null;
-        }
+        $data['expired_at'] = !empty($data['expired_at']) ? date('Y-m-d H:i:s', strtotime($data['expired_at'])) : null;
 
         $this->App_model->update('orders', $id, $data);
         $this->redirect_success('orders', 'Order berhasil diperbarui.');
@@ -209,7 +205,6 @@ class Orders extends MY_Controller
                     continue;
                 }
 
-                $expired_days = isset($order['expired_days']) ? (int) $order['expired_days'] : 0;
                 $this->App_model->insert('orders', array(
                     'shopee_order_id' => !empty($order['shopee_order_id']) ? $order['shopee_order_id'] : 'QO-'.date('YmdHis').'-'.$i,
                     'shopee_store_id' => !empty($order['shopee_store_id']) ? $order['shopee_store_id'] : null,
@@ -219,7 +214,7 @@ class Orders extends MY_Controller
                     'product_name' => $order['product_name'],
                     'variation' => isset($order['variation']) ? $order['variation'] : null,
                     'buyer_email' => isset($order['buyer_email']) ? $order['buyer_email'] : null,
-                    'expired_at' => $expired_days > 0 ? date('Y-m-d H:i:s', strtotime('+'.$expired_days.' days')) : null,
+                    'expired_at' => !empty($order['expired_at']) ? date('Y-m-d H:i:s', strtotime($order['expired_at'])) : null,
                     'total' => isset($order['total']) ? $order['total'] : 0,
                     'created_at' => $this->posted_order_datetime(),
                 ));
@@ -234,14 +229,13 @@ class Orders extends MY_Controller
         $order_types = (array) $this->input->post('order_type', true);
         $variations = (array) $this->input->post('variation', true);
         $buyer_emails = (array) $this->input->post('buyer_email', true);
-        $expired_days_rows = (array) $this->input->post('expired_days', true);
+        $expired_at_rows = (array) $this->input->post('expired_at', true);
         $totals = (array) $this->input->post('total', true);
         $created = 0;
         foreach ((array) $product_names as $i => $product_name) {
             if (!$product_name) {
                 continue;
             }
-            $expired_days = isset($expired_days_rows[$i]) ? (int) $expired_days_rows[$i] : 0;
             $this->App_model->insert('orders', array(
                 'shopee_order_id' => !empty($order_codes[$i]) ? $order_codes[$i] : 'QO-'.date('YmdHis').'-'.$i,
                 'shopee_store_id' => isset($store_ids[$i]) ? $store_ids[$i] : null,
@@ -251,7 +245,7 @@ class Orders extends MY_Controller
                 'product_name' => $product_name,
                 'variation' => isset($variations[$i]) ? $variations[$i] : null,
                 'buyer_email' => isset($buyer_emails[$i]) ? $buyer_emails[$i] : null,
-                'expired_at' => $expired_days > 0 ? date('Y-m-d H:i:s', strtotime('+'.$expired_days.' days')) : null,
+                'expired_at' => !empty($expired_at_rows[$i]) ? date('Y-m-d H:i:s', strtotime($expired_at_rows[$i])) : null,
                 'total' => isset($totals[$i]) ? $totals[$i] : 0,
                 'created_at' => $this->posted_order_datetime(),
             ));

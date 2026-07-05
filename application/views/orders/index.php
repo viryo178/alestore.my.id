@@ -111,7 +111,7 @@ foreach ($variations as $variation) {
                             <td><span class="date-text"><?= date('d/m/Y', strtotime($order->created_at)); ?></span><span class="order-subtext"><?= date('H:i', strtotime($order->created_at)); ?></span></td>
                             <td><span class="renewal-pill"><?= h($statusLabel); ?></span></td>
                             <td><span class="refund-pill">Normal</span></td>
-                            <td class="text-end"><div class="order-action-group"><button type="button" class="btn btn-sm btn-outline-primary edit-order-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#editOrderModal" data-id="<?= (int) $order->id; ?>" data-code="<?= h($order->shopee_order_id); ?>" data-store-id="<?= h($order->shopee_store_id); ?>" data-status="<?= h($order->status); ?>" data-type="<?= h($orderType); ?>" data-product="<?= h($order->product_name); ?>" data-variation="<?= h($order->variation); ?>" data-email="<?= h($order->buyer_email); ?>" data-account-username="<?= h($order->account_username ?? ''); ?>" data-account-password="<?= h($order->account_password ?? ''); ?>" data-account-max-user="<?= h($order->account_max_user ?? 1); ?>" data-total="<?= h($order->total); ?>" data-expired="<?= $order->expired_at ? h(date('Y-m-d\TH:i', strtotime($order->expired_at))) : ''; ?>"><i class="bi bi-pencil-square"></i></button><a href="<?= site_url('orders/show/'.$order->id); ?>" class="btn btn-sm btn-outline-primary" title="Lihat"><i class="bi bi-eye"></i></a><a onclick="return confirm('Hapus order?')" href="<?= site_url('orders/delete/'.$order->id); ?>" class="btn btn-sm btn-outline-danger" title="Hapus"><i class="bi bi-trash"></i></a></div></td>
+                            <td class="text-end"><div class="order-action-group"><button type="button" class="btn btn-sm btn-outline-primary edit-order-btn" title="Edit" data-bs-toggle="modal" data-bs-target="#editOrderModal" data-id="<?= (int) $order->id; ?>" data-code="<?= h($order->shopee_order_id); ?>" data-store-id="<?= h($order->shopee_store_id); ?>" data-status="<?= h($order->status); ?>" data-type="<?= h($orderType); ?>" data-product="<?= h($order->product_name); ?>" data-variation="<?= h($order->variation); ?>" data-email="<?= h($order->buyer_email); ?>" data-account-username="<?= h($order->account_username ?? ''); ?>" data-account-password="<?= h($order->account_password ?? ''); ?>" data-account-max-user="<?= h($order->account_max_user ?? 1); ?>" data-total="<?= h($order->total); ?>" data-expired="<?= $order->expired_at ? h(date('Y-m-d', strtotime($order->expired_at))) : ''; ?>"><i class="bi bi-pencil-square"></i></button><a href="<?= site_url('orders/show/'.$order->id); ?>" class="btn btn-sm btn-outline-primary" title="Lihat"><i class="bi bi-eye"></i></a><a onclick="return confirm('Hapus order?')" href="<?= site_url('orders/delete/'.$order->id); ?>" class="btn btn-sm btn-outline-danger" title="Hapus"><i class="bi bi-trash"></i></a></div></td>
                         </tr>
                     <?php endforeach; else: ?>
                         <tr><td colspan="13" class="text-center text-muted py-4">Belum ada order. Klik Input Order Baru untuk menambahkan data manual.</td></tr>
@@ -197,7 +197,7 @@ foreach ($variations as $variation) {
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Expired</label>
-                                <input type="datetime-local" name="expired_at" class="form-control" id="editOrderExpired">
+                                <input type="date" name="expired_at" class="form-control" id="editOrderExpired">
                             </div>
                         </div>
                     </div>
@@ -313,11 +313,8 @@ foreach ($variations as $variation) {
                                 <div class="form-text">Otomatis terisi dari produk/variasi, bisa di-override.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Durasi Expired</label>
-                                <select name="expired_days" class="form-select" id="manualExpiredDays">
-                                    <?php if ($durations): foreach ($durations as $duration): ?><option value="<?= (int) $duration->days; ?>" <?= $duration->is_default ? 'selected' : ''; ?>><?= h($duration->label); ?></option><?php endforeach; else: ?><option value="30">30 Hari</option><?php endif; ?>
-                                </select>
-                                <div class="form-text" id="manualExpiredText">Expired: -</div>
+                                <label class="form-label">Expired Akun</label>
+                                <input type="date" name="expired_at" class="form-control">
                             </div>
 
                             <div class="col-12">
@@ -365,7 +362,7 @@ foreach ($variations as $variation) {
                 <div class="modal-body">
                     <div class="table-responsive">
                         <table class="table quick-order-table align-middle mb-0">
-                            <thead><tr><th>#</th><th>No. Order Marketplace</th><th>Toko *</th><th>Tipe *</th><th>Produk *</th><th>Variasi</th><th>Email</th><th>Harga</th><th>Durasi Expired</th><th></th></tr></thead>
+                            <thead><tr><th>#</th><th>No. Order Marketplace</th><th>Toko *</th><th>Tipe *</th><th>Produk *</th><th>Variasi</th><th>Email</th><th>Harga</th><th>Expired Akun</th><th></th></tr></thead>
                             <tbody id="quickOrderRows">
                             <?php for ($row = 0; $row < 3; $row++): ?>
                                 <tr class="quick-order-row">
@@ -398,11 +395,7 @@ foreach ($variations as $variation) {
                                     </td>
                                     <td><input type="email" name="orders[<?= $row; ?>][buyer_email]" class="form-control" placeholder="email@gmail.com"></td>
                                     <td><input type="number" name="orders[<?= $row; ?>][total]" class="form-control" value="0" min="0" step="100" required></td>
-                                    <td>
-                                        <select name="orders[<?= $row; ?>][expired_days]" class="form-select">
-                                            <?php if ($durations): foreach ($durations as $duration): ?><option value="<?= (int) $duration->days; ?>" <?= $duration->is_default ? 'selected' : ''; ?>><?= h($duration->label); ?></option><?php endforeach; else: ?><option value="30">30 Hari</option><?php endif; ?>
-                                        </select>
-                                    </td>
+                                    <td><input type="date" name="orders[<?= $row; ?>][expired_at]" class="form-control"></td>
                                     <td><button type="button" class="btn btn-sm btn-outline-danger quick-remove-row" title="Hapus baris"><i class="bi bi-trash"></i></button></td>
                                 </tr>
                             <?php endfor; ?>
@@ -505,26 +498,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function setExpiredPreview() {
-        var duration = document.getElementById('manualExpiredDays');
-        var text = document.getElementById('manualExpiredText');
-        if (!duration || !text) return;
-
-        var days = parseInt(duration.value || '0', 10);
-        if (!days) {
-            text.textContent = 'Expired: -';
-            return;
-        }
-
-        var date = new Date();
-        date.setDate(date.getDate() + days);
-        text.textContent = 'Expired: ' + date.toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    }
-
     var manualProduct = document.getElementById('manualProduct');
     var manualVariation = document.getElementById('manualVariation');
     var manualOrderType = document.getElementById('manualOrderType');
@@ -582,9 +555,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
-    document.getElementById('manualExpiredDays')?.addEventListener('change', setExpiredPreview);
-    setExpiredPreview();
-
     var editForm = document.getElementById('editOrderForm');
     var editProduct = document.getElementById('editOrderProduct');
     var editVariation = document.getElementById('editOrderVariation');

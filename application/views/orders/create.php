@@ -136,11 +136,8 @@ foreach ($variations as $variation) {
                 <div class="form-text">Otomatis terisi dari produk/variasi, bisa di-override.</div>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Durasi Expired</label>
-                <select name="expired_days" class="form-select" id="expiredDays">
-                    <?php if ($durations): foreach ($durations as $duration): ?><option value="<?= (int) $duration->days; ?>" <?= $duration->is_default ? 'selected' : ''; ?>><?= h($duration->label); ?></option><?php endforeach; else: ?><option value="30">30 Hari</option><?php endif; ?>
-                </select>
-                <div class="form-text" id="expiredText">Expired: -</div>
+                <label class="form-label">Expired Akun</label>
+                <input type="date" name="expired_at" class="form-control">
             </div>
 
             <div class="col-12">
@@ -273,19 +270,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 250);
     }
 
-    function setExpiredPreview() {
-        var duration = document.getElementById('expiredDays');
-        var text = document.getElementById('expiredText');
-        var days = parseInt(duration.value || '0', 10);
-        if (!days) {
-            text.textContent = 'Expired: -';
-            return;
-        }
-        var date = new Date();
-        date.setDate(date.getDate() + days);
-        text.textContent = 'Expired: ' + date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-    }
-
     document.querySelectorAll('.mode-tab').forEach(function (button) {
         button.addEventListener('click', function () {
             document.querySelectorAll('.mode-tab').forEach(function (item) { item.classList.remove('active'); });
@@ -300,7 +284,5 @@ document.addEventListener('DOMContentLoaded', function () {
     productSelect.addEventListener('change', syncProduct);
     variationSelect.addEventListener('change', syncVariationPrice);
     typeSelect.addEventListener('change', checkAvailableAccount);
-    document.getElementById('expiredDays').addEventListener('change', setExpiredPreview);
-    setExpiredPreview();
 });
 </script>
