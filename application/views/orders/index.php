@@ -2,7 +2,7 @@
 $orderProductsPayload = array();
 foreach ($products as $product) {
     $orderProductsPayload[] = array(
-        'id' => (int) $product->id,
+        'id' => (string) $product->id,
         'name' => $product->name,
         'account_type' => $product->account_type ?: 'private',
         'price' => (float) ($product->hpp ?: 0),
@@ -13,7 +13,8 @@ $orderVariationsPayload = array();
 foreach ($variations as $variation) {
     $orderVariationsPayload[] = array(
         'id' => (int) $variation->id,
-        'product_id' => (int) $variation->digital_product_id,
+        'product_id' => (string) $variation->digital_product_id,
+        'product_name' => $variation->product_name ?? '',
         'label' => $variation->label,
         'price' => (float) ($variation->sale_price ?: 0),
     );
@@ -168,7 +169,7 @@ foreach ($variations as $variation) {
                                 <select name="product_name" class="form-select order-product-select" id="editOrderProduct" required>
                                     <option value="">Pilih Produk</option>
                                     <?php foreach ($products as $product): ?>
-                                        <option value="<?= h($product->name); ?>" data-id="<?= (int) $product->id; ?>"><?= h($product->name); ?></option>
+                                        <option value="<?= h($product->name); ?>" data-id="<?= h($product->id); ?>"><?= h($product->name); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <div class="form-text">Mengganti produk akan menyesuaikan tipe dan harga default.</div>
@@ -373,7 +374,7 @@ foreach ($variations as $variation) {
                                     <td>
                                         <select name="orders[<?= $row; ?>][product_name]" class="form-select quick-product-select" required>
                                             <option value="">-- Pilih Produk --</option>
-                                            <?php foreach ($products as $product): ?><option value="<?= h($product->name); ?>" data-id="<?= (int) $product->id; ?>"><?= h($product->name); ?></option><?php endforeach; ?>
+                                            <?php foreach ($products as $product): ?><option value="<?= h($product->name); ?>" data-id="<?= h($product->id); ?>"><?= h($product->name); ?></option><?php endforeach; ?>
                                         </select>
                                     </td>
                                     <td>
@@ -381,15 +382,15 @@ foreach ($variations as $variation) {
                                             <option value="">-- Tanpa --</option>
                                             <?php foreach ($variations as $variation): ?>
                                                 <?php
-                                                $productName = '';
+                                                $productName = $variation->product_name ?? '';
                                                 foreach ($products as $product) {
-                                                    if ((int) $product->id === (int) $variation->digital_product_id) {
+                                                    if ($productName === '' && (string) $product->id === (string) $variation->digital_product_id) {
                                                         $productName = $product->name;
                                                         break;
                                                     }
                                                 }
                                                 ?>
-                                                <option value="<?= h($variation->label); ?>" data-product="<?= h($productName); ?>" data-product-id="<?= (int) $variation->digital_product_id; ?>" data-price="<?= h($variation->sale_price ?? 0); ?>"><?= h($variation->label); ?><?= !empty($variation->sale_price) ? ' - '.rupiah($variation->sale_price) : ''; ?></option>
+                                                <option value="<?= h($variation->label); ?>" data-product="<?= h($productName); ?>" data-product-id="<?= h($variation->digital_product_id); ?>" data-price="<?= h($variation->sale_price ?? 0); ?>"><?= h($variation->label); ?><?= !empty($variation->sale_price) ? ' - '.rupiah($variation->sale_price) : ''; ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </td>
@@ -480,7 +481,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!product) return;
 
         orderVariations
-            .filter(function (variation) { return String(variation.product_id) === String(product.id); })
+            .filter(function (variation) {
+                return String(variation.product_id) === String(product.id) || variation.product_name === product.name;
+            })
             .forEach(function (variation) {
                 var option = document.createElement('option');
                 option.value = variation.label;

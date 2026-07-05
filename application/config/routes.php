@@ -76,6 +76,7 @@ $route['digital-accounts/products/delete/(:num)'] = 'digital_accounts/product_de
 $route['users/change-password'] = 'users/change_password';
 $route['users/update-password'] = 'users/update_password';
 $route['products/(:num)/variations'] = 'products/store_variation/$1';
+$route['products/legacy/variations'] = 'products/store_legacy_variation';
 $route['products/legacy/update'] = 'products/legacy_update';
 $route['products/legacy/delete'] = 'products/legacy_delete';
 $route['expire-durations/(:num)/default'] = 'expire_durations/set_default/$1';

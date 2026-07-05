@@ -2,7 +2,7 @@
 $orderProductsPayload = array();
 foreach ($products as $product) {
     $orderProductsPayload[] = array(
-        'id' => (int) $product->id,
+        'id' => (string) $product->id,
         'name' => $product->name,
         'account_type' => $product->account_type ?: 'private',
         'price' => (float) ($product->hpp ?: 0),
@@ -13,7 +13,8 @@ $orderVariationsPayload = array();
 foreach ($variations as $variation) {
     $orderVariationsPayload[] = array(
         'id' => (int) $variation->id,
-        'product_id' => (int) $variation->digital_product_id,
+        'product_id' => (string) $variation->digital_product_id,
+        'product_name' => $variation->product_name ?? '',
         'label' => $variation->label,
         'price' => (float) ($variation->sale_price ?: 0),
     );
@@ -107,7 +108,7 @@ foreach ($variations as $variation) {
                 <label class="form-label">Produk <span class="text-danger">*</span></label>
                 <select name="product_name" class="form-select" id="orderProduct" required>
                     <option value="">Pilih Produk</option>
-                    <?php foreach ($products as $product): ?><option value="<?= h($product->name); ?>" data-id="<?= (int) $product->id; ?>"><?= h($product->name); ?></option><?php endforeach; ?>
+                    <?php foreach ($products as $product): ?><option value="<?= h($product->name); ?>" data-id="<?= h($product->id); ?>"><?= h($product->name); ?></option><?php endforeach; ?>
                 </select>
                 <div class="mt-3 product-alert" id="productHelp">Pilih produk untuk cek stok.</div>
             </div>
@@ -187,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
         variationSelect.innerHTML = '<option value="">Pilih variasi</option>';
         if (!product) return;
         orderVariations.filter(function (variation) {
-            return String(variation.product_id) === String(product.id);
+            return String(variation.product_id) === String(product.id) || variation.product_name === product.name;
         }).forEach(function (variation) {
             var option = document.createElement('option');
             option.value = variation.label;

@@ -132,9 +132,7 @@ $methodBadge = array(
                                 </td>
                                 <td><span class="status-pill <?= !isset($product->is_active) || $product->is_active ? '' : 'inactive'; ?>"><?= !isset($product->is_active) || $product->is_active ? 'Aktif' : 'Nonaktif'; ?></span></td>
                                 <td class="text-end">
-                                    <?php if (empty($product->is_legacy)): ?>
-                                        <button type="button" class="btn btn-sm btn-outline-primary product-action" data-bs-toggle="modal" data-bs-target="#variationProductModal<?= $productKey; ?>"><i class="bi bi-plus-lg"></i> Variasi</button>
-                                    <?php endif; ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary product-action" data-bs-toggle="modal" data-bs-target="#variationProductModal<?= $productKey; ?>"><i class="bi bi-plus-lg"></i> Variasi</button>
                                     <button type="button" class="btn btn-sm btn-outline-primary" title="Edit" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $productKey; ?>"><i class="bi bi-pencil"></i></button>
                                     <button type="button" class="btn btn-sm btn-outline-danger" title="Hapus" data-bs-toggle="modal" data-bs-target="#deleteProductModal<?= $productKey; ?>"><i class="bi bi-trash"></i></button>
                                 </td>
@@ -239,27 +237,31 @@ $methodBadge = array(
             </div>
         </div>
 
-        <?php if (empty($product->is_legacy)): ?>
-            <div class="modal fade product-modal" id="variationProductModal<?= $productKey; ?>" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                    <form action="<?= site_url('products/'.$product->id.'/variations'); ?>" method="POST" class="modal-content">
-                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-plus-lg"></i> Tambah Variasi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                        <div class="modal-body">
-                            <div class="mb-3"><label class="form-label">Produk</label><input type="text" class="form-control" value="<?= h($product->name); ?>" disabled></div>
-                            <div class="mb-3"><label class="form-label">Nama Variasi <span class="text-danger">*</span></label><input type="text" name="label" class="form-control" placeholder="cth: Sharing 3 User 1 Bulan" required></div>
-                            <div class="mb-3"><label class="form-label">Harga Jual (Rp) <span class="text-danger">*</span></label><input type="number" name="sale_price" class="form-control" min="0" step="100" placeholder="cth: 35000" required></div>
-                            <div class="mb-3"><label class="form-label">HPP / COGS (Rp)</label><input type="number" name="hpp" class="form-control" value="0" min="0" step="100"><div class="form-text">Harga pokok - digunakan di laporan keuangan.</div></div>
-                            <?php if ($product->variations_count > 0): ?>
-                                <div class="small text-muted">Variasi saat ini:
-                                    <?php $names = array(); foreach ($variations as $variation) { if ((int) $variation->digital_product_id === (int) $product->id) $names[] = $variation->label; } echo h(implode(', ', $names)); ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Simpan</button></div>
-                    </form>
-                </div>
+        <div class="modal fade product-modal" id="variationProductModal<?= $productKey; ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <form action="<?= !empty($product->is_legacy) ? site_url('products/legacy/variations') : site_url('products/'.$product->id.'/variations'); ?>" method="POST" class="modal-content">
+                    <?php if (!empty($product->is_legacy)): ?>
+                        <input type="hidden" name="old_product_name" value="<?= h($product->name); ?>">
+                        <input type="hidden" name="old_account_type" value="<?= h($product->account_type); ?>">
+                        <input type="hidden" name="old_method" value="<?= h($product->method); ?>">
+                        <input type="hidden" name="product_hpp" value="<?= h($product->hpp ?? 0); ?>">
+                    <?php endif; ?>
+                    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-plus-lg"></i> Tambah Variasi</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <div class="mb-3"><label class="form-label">Produk</label><input type="text" class="form-control" value="<?= h($product->name); ?>" disabled></div>
+                        <div class="mb-3"><label class="form-label">Nama Variasi <span class="text-danger">*</span></label><input type="text" name="label" class="form-control" placeholder="cth: Sharing 3 User 1 Bulan" required></div>
+                        <div class="mb-3"><label class="form-label">Harga Jual (Rp) <span class="text-danger">*</span></label><input type="number" name="sale_price" class="form-control" min="0" step="100" placeholder="cth: 35000" required></div>
+                        <div class="mb-3"><label class="form-label">HPP / COGS (Rp)</label><input type="number" name="hpp" class="form-control" value="0" min="0" step="100"><div class="form-text">Harga pokok - digunakan di laporan keuangan.</div></div>
+                        <?php if (empty($product->is_legacy) && $product->variations_count > 0): ?>
+                            <div class="small text-muted">Variasi saat ini:
+                                <?php $names = array(); foreach ($variations as $variation) { if ((int) $variation->digital_product_id === (int) $product->id) $names[] = $variation->label; } echo h(implode(', ', $names)); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Simpan</button></div>
+                </form>
             </div>
-        <?php endif; ?>
+        </div>
 
         <div class="modal fade" id="deleteProductModal<?= $productKey; ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">

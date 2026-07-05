@@ -90,6 +90,34 @@ class Products extends MY_Controller
         $this->redirect_success('products', 'Variasi berhasil ditambahkan.');
     }
 
+    public function store_legacy_variation()
+    {
+        $productData = array(
+            'name' => $this->input->post('old_product_name', true),
+            'method' => $this->input->post('old_method', true) ?: 'credentials',
+            'account_type' => $this->input->post('old_account_type', true) ?: 'private',
+            'max_slot' => 1,
+            'hpp' => $this->input->post('product_hpp', true) ?: 0,
+            'is_active' => 1,
+        );
+
+        $this->App_model->insert('digital_products', $productData);
+        $productId = $this->db->insert_id();
+
+        $this->legacy_scope()->update('digital_accounts', array(
+            'digital_product_id' => $productId,
+            'method' => $productData['method'],
+            'account_type' => $productData['account_type'],
+        ));
+
+        $data = $this->post(array('label', 'sale_price', 'hpp'));
+        $data['digital_product_id'] = $productId;
+        $data['is_active'] = 1;
+        $this->App_model->insert('digital_product_variations', $data);
+
+        $this->redirect_success('products', 'Produk stok dibuat ke katalog dan variasi berhasil ditambahkan.');
+    }
+
     private function product_data()
     {
         $method = $this->input->post('method', true) ?: 'credentials';

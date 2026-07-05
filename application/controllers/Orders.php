@@ -58,8 +58,8 @@ class Orders extends MY_Controller
 
         $rows = $this->db->get()->result();
 
-        $products = $this->db->table_exists('digital_products') ? $this->App_model->all('digital_products', 'name ASC') : array();
-        $variations = $this->db->table_exists('digital_product_variations') ? $this->App_model->all('digital_product_variations', 'label ASC') : array();
+        $products = $this->order_products();
+        $variations = $this->order_variations();
         $privateStock = $this->db
             ->where('account_type', 'private')
             ->where('status', 'available')
@@ -88,8 +88,8 @@ class Orders extends MY_Controller
 
     public function create()
     {
-        $products = $this->db->table_exists('digital_products') ? $this->App_model->all('digital_products', 'name ASC') : array();
-        $variations = $this->db->table_exists('digital_product_variations') ? $this->App_model->all('digital_product_variations', 'label ASC') : array();
+        $products = $this->order_products();
+        $variations = $this->order_variations();
         $privateStock = $this->db
             ->where('account_type', 'private')
             ->where('status', 'available')
@@ -279,6 +279,72 @@ class Orders extends MY_Controller
         }
 
         return now_sql();
+    }
+
+    private function order_products()
+    {
+        $products = $this->db->table_exists('digital_products') ? $this->App_model->all('digital_products', 'name ASC') : array();
+        $byName = array();
+        foreach ($products as $product) {
+            $byName[strtolower(trim($product->name))] = true;
+        }
+
+        $legacy = $this->db
+            ->select('product_name name, account_type, method, COALESCE(MAX(hpp), 0) hpp', false)
+            ->from('digital_accounts')
+            ->where('product_name IS NOT NULL', null, false)
+            ->where('product_name !=', '')
+            ->group_by(array('product_name', 'account_type', 'method'))
+            ->order_by('product_name', 'ASC')
+            ->get()
+            ->result();
+
+        foreach ($legacy as $row) {
+            $key = strtolower(trim($row->name));
+            if (isset($byName[$key])) {
+                continue;
+            }
+            $row->id = 'legacy_'.md5($key.'|'.$row->account_type.'|'.$row->method);
+            $products[] = $row;
+            $byName[$key] = true;
+        }
+
+        usort($products, function ($a, $b) {
+            return strcasecmp($a->name, $b->name);
+        });
+
+        return $products;
+    }
+
+    private function order_variations()
+    {
+        $variations = $this->db->table_exists('digital_product_variations') ? $this->App_model->all('digital_product_variations', 'label ASC') : array();
+        $existing = array();
+        foreach ($variations as $variation) {
+            $existing[strtolower($variation->label).'|'.$variation->digital_product_id] = true;
+        }
+
+        $legacy = $this->db
+            ->select('product_name, variation label, COALESCE(MAX(hpp), 0) hpp', false)
+            ->from('digital_accounts')
+            ->where('product_name IS NOT NULL', null, false)
+            ->where('product_name !=', '')
+            ->where('variation IS NOT NULL', null, false)
+            ->where('variation !=', '')
+            ->group_by(array('product_name', 'variation'))
+            ->order_by('variation', 'ASC')
+            ->get()
+            ->result();
+
+        foreach ($legacy as $row) {
+            $row->id = 0;
+            $row->digital_product_id = 0;
+            $row->sale_price = 0;
+            $row->product_name = $row->product_name;
+            $variations[] = $row;
+        }
+
+        return $variations;
     }
 
     public function show($id)
