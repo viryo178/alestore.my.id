@@ -309,20 +309,48 @@ class Digital_accounts extends MY_Controller
         $this->redirect_success('digital-accounts?section=product-stock', 'Produk berhasil dihapus.');
     }
 
+    public function legacy_product_update()
+    {
+        $this->apply_legacy_product_scope();
+        $this->db->update('digital_accounts', $this->filter_existing_fields('digital_accounts', array(
+            'product_name' => $this->input->post('name', true),
+            'variation' => $this->input->post('variation', true),
+            'account_type' => $this->input->post('account_type', true),
+            'method' => $this->input->post('method', true),
+            'max_slot' => max(1, (int) $this->input->post('max_slot', true)),
+            'hpp' => $this->input->post('hpp', true) ?: 0,
+        )));
+
+        $this->redirect_success('digital-accounts?section=product-stock', 'Grup stok berhasil diperbarui.');
+    }
+
+    public function legacy_product_destroy()
+    {
+        $this->apply_legacy_product_scope();
+        $this->db->delete('digital_accounts');
+        $this->redirect_success('digital-accounts?section=product-stock', 'Grup stok berhasil dihapus.');
+    }
+
     public function feed()
     {
         $this->output->set_content_type('application/json');
-        $this->db->from('digital_accounts');
-        $this->apply_account_feed_filters();
+        $filteredTotal = $this->count_filtered_account_feed();
 
         $perPage = $this->input->get('per_page', true) ?: '10';
         $allowedPerPage = array('10', '25', '50', 'all');
         if (!in_array($perPage, $allowedPerPage, true)) {
             $perPage = '10';
         }
+        $page = max(1, (int) ($this->input->get('page', true) ?: 1));
+        $totalPages = $perPage === 'all' ? 1 : max(1, (int) ceil($filteredTotal / (int) $perPage));
+        $page = min($page, $totalPages);
 
+        $this->db->from('digital_accounts');
+        $this->apply_account_feed_filters();
         if ($perPage !== 'all') {
-            $this->db->limit((int) $perPage);
+            $this->db->limit((int) $perPage, ($page - 1) * (int) $perPage);
+        } else {
+            $page = 1;
         }
 
         $accounts = $this->db->order_by('id', 'DESC')->get()->result();
@@ -351,7 +379,11 @@ class Digital_accounts extends MY_Controller
 
         echo json_encode(array(
             'total' => $this->App_model->count('digital_accounts'),
+            'filtered_total' => $filteredTotal,
             'accounts' => $items,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_pages' => $totalPages,
             'server_time' => date('d M Y, H:i:s').' WIB',
             'expired_soon' => $this->db
                 ->where('expired_at IS NOT NULL', null, false)
@@ -360,6 +392,33 @@ class Digital_accounts extends MY_Controller
                 ->where_not_in('status', array('sold', 'deactived', 'no_access'))
                 ->count_all_results('digital_accounts'),
         ));
+    }
+
+    private function count_filtered_account_feed()
+    {
+        $this->db->from('digital_accounts');
+        $this->apply_account_feed_filters();
+        return $this->db->count_all_results();
+    }
+
+    private function apply_legacy_product_scope()
+    {
+        $productName = $this->input->post('old_product_name', true);
+        $variation = $this->input->post('old_variation', true);
+        $accountType = $this->input->post('old_account_type', true);
+
+        $this->db->group_start()
+            ->where('digital_product_id', null)
+            ->or_where('digital_product_id', '')
+            ->group_end()
+            ->where('product_name', $productName)
+            ->where('account_type', $accountType);
+
+        if ($variation === '') {
+            $this->db->group_start()->where('variation', null)->or_where('variation', '')->group_end();
+        } else {
+            $this->db->where('variation', $variation);
+        }
     }
 
     private function apply_account_feed_filters()

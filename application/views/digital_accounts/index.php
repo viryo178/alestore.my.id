@@ -41,6 +41,8 @@ ksort($productNames);
     .datatable-filter-control{min-width:170px}
     .datatable-length{align-items:center;display:flex;gap:8px}.datatable-length .form-select{width:75px}
     .datatable-search{min-width:260px}.stock-summary-table th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+    .account-pagination{align-items:center;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px}
+    .account-pagination .btn{min-width:36px}
     .section-tabs{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
     .account-method-grid{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
     .account-method-card{align-items:flex-start;background:rgba(47,124,255,.08);border:1px solid rgba(47,124,255,.16);border-radius:8px;display:flex;gap:10px;padding:12px}
@@ -117,6 +119,9 @@ ksort($productNames);
                                     <?php if ($stock['product_id']): ?>
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $stock['product_id']; ?>"><i class="bi bi-pencil"></i></button>
                                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteProductModal<?= $stock['product_id']; ?>"><i class="bi bi-trash"></i></button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLegacyProductModal<?= $stockIndex; ?>"><i class="bi bi-pencil"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteLegacyProductModal<?= $stockIndex; ?>"><i class="bi bi-trash"></i></button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -207,6 +212,7 @@ ksort($productNames);
                         </tbody>
                     </table>
                 </div>
+                <div class="account-pagination" id="accountPagination"></div>
             </div>
         </div>
     <?php endif; ?>
@@ -274,6 +280,35 @@ ksort($productNames);
             <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Update Stok</button></div>
         </form></div></div>
     </div>
+    <?php if (!$stock['product_id']): ?>
+        <div class="modal fade" id="editLegacyProductModal<?= $stockIndex; ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/products/legacy/update'); ?>" method="POST">
+                <input type="hidden" name="old_product_name" value="<?= h($stock['product_name']); ?>">
+                <input type="hidden" name="old_variation" value="<?= h($stock['variation']); ?>">
+                <input type="hidden" name="old_account_type" value="<?= h($stock['account_type']); ?>">
+                <div class="modal-header"><div><h5 class="modal-title"><i class="bi bi-pencil-square text-primary"></i> Edit Grup Stok</h5><small class="text-muted"><?= h($modalTitle); ?></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><div class="row g-4">
+                    <div class="col-md-6"><label class="form-label">Nama Produk</label><input type="text" name="name" class="form-control" value="<?= h($stock['product_name']); ?>" required></div>
+                    <div class="col-md-6"><label class="form-label">Variasi</label><input type="text" name="variation" class="form-control" value="<?= h($stock['variation']); ?>"></div>
+                    <div class="col-md-6"><label class="form-label">Kategori Akun</label><select name="account_type" class="form-select"><option value="private" <?= $stock['account_type'] === 'private' ? 'selected' : ''; ?>>Private</option><option value="sharing" <?= $stock['account_type'] === 'sharing' ? 'selected' : ''; ?>>Sharing</option></select></div>
+                    <div class="col-md-6"><label class="form-label">Metode</label><select name="method" class="form-select"><?php foreach (array('credentials','invite_email','link','license') as $method): ?><option value="<?= $method; ?>" <?= $stock['method'] === $method ? 'selected' : ''; ?>><?= h(ucfirst(str_replace('_',' ', $method))); ?></option><?php endforeach; ?></select></div>
+                    <div class="col-md-6"><label class="form-label">Max Slot</label><input type="number" name="max_slot" class="form-control" value="<?= h($stock['max_slot'] ?: 1); ?>" min="1"></div>
+                    <div class="col-md-6"><label class="form-label">HPP Default</label><input type="number" name="hpp" class="form-control" value="<?= h($stock['hpp'] ?: 0); ?>" min="0" step="100"></div>
+                </div></div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Grup</button></div>
+            </form></div></div>
+        </div>
+        <div class="modal fade" id="deleteLegacyProductModal<?= $stockIndex; ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog"><div class="modal-content"><form action="<?= site_url('digital-accounts/products/legacy/delete'); ?>" method="POST">
+                <input type="hidden" name="old_product_name" value="<?= h($stock['product_name']); ?>">
+                <input type="hidden" name="old_variation" value="<?= h($stock['variation']); ?>">
+                <input type="hidden" name="old_account_type" value="<?= h($stock['account_type']); ?>">
+                <div class="modal-header"><h5 class="modal-title">Hapus Grup Stok</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">Hapus grup <strong><?= h($modalTitle); ?></strong> beserta <?= number_format($stock['total']); ?> akun di dalamnya?</div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-danger">Hapus Grup</button></div>
+            </form></div></div>
+        </div>
+    <?php endif; ?>
 <?php endforeach; ?>
 
 <?php foreach ($license_stocks as $stockIndex => $stock): ?>
@@ -314,8 +349,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const expiredNotice = document.getElementById('expiredNotice');
     const expiredCount = document.getElementById('expiredCount');
     const reset = document.getElementById('resetFilter');
+    const pagination = document.getElementById('accountPagination');
     const labels = <?= json_encode($statusLabels); ?>;
     const badgeClasses = <?= json_encode($statusBadgeClasses); ?>;
+    let currentPage = 1;
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, function (char) {
@@ -341,17 +378,47 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join('');
     }
 
+    function renderPagination(data) {
+        if (!pagination) return;
+        const totalPages = Number(data.total_pages || 1);
+        const page = Number(data.page || 1);
+        if (data.per_page === 'all' || totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        const pages = [];
+        const start = Math.max(1, page - 2);
+        const end = Math.min(totalPages, page + 2);
+        if (start > 1) pages.push(1);
+        if (start > 2) pages.push('...');
+        for (let i = start; i <= end; i++) pages.push(i);
+        if (end < totalPages - 1) pages.push('...');
+        if (end < totalPages) pages.push(totalPages);
+
+        pagination.innerHTML = `
+            <button type="button" class="btn btn-sm btn-outline-primary" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>
+            ${pages.map(function (item) {
+                if (item === '...') return '<span class="text-muted px-1">...</span>';
+                return `<button type="button" class="btn btn-sm ${item === page ? 'btn-primary' : 'btn-outline-primary'}" data-page="${item}">${item}</button>`;
+            }).join('')}
+            <button type="button" class="btn btn-sm btn-outline-primary" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>
+        `;
+    }
+
     async function loadAccounts() {
         if (!app || !tbody || !search || !type || !status || !perPage) return;
-        const params = new URLSearchParams({q: search.value, account_type: type.value, status: status.value, per_page: perPage.value});
+        const params = new URLSearchParams({q: search.value, account_type: type.value, status: status.value, per_page: perPage.value, page: currentPage});
         const response = await fetch(`${app.dataset.feedUrl}?${params.toString()}`, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
         const data = await response.json();
+        currentPage = Number(data.page || 1);
         total.textContent = new Intl.NumberFormat('id-ID').format(data.total);
         visibleRows.textContent = new Intl.NumberFormat('id-ID').format(data.accounts.length);
         serverTime.textContent = data.server_time;
         expiredCount.textContent = data.expired_soon;
         expiredNotice.classList.toggle('d-none', data.expired_soon < 1);
         renderRows(data.accounts);
+        renderPagination(data);
     }
 
     let timer;
@@ -360,11 +427,17 @@ document.addEventListener('DOMContentLoaded', function () {
         timer = setTimeout(loadAccounts, 300);
     }
 
-    if (search) search.addEventListener('input', queueLoad);
-    if (type) type.addEventListener('change', loadAccounts);
-    if (status) status.addEventListener('change', loadAccounts);
-    if (perPage) perPage.addEventListener('change', loadAccounts);
-    if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; perPage.value = '10'; loadAccounts(); });
+    if (search) search.addEventListener('input', function () { currentPage = 1; queueLoad(); });
+    if (type) type.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
+    if (status) status.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
+    if (perPage) perPage.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
+    if (pagination) pagination.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-page]');
+        if (!button || button.disabled) return;
+        currentPage = Number(button.dataset.page || 1);
+        loadAccounts();
+    });
+    if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; perPage.value = '10'; currentPage = 1; loadAccounts(); });
     loadAccounts();
     if (tbody) setInterval(loadAccounts, 5000);
 
