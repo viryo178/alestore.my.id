@@ -24,7 +24,7 @@
                     <div class="col-md-4"><label class="form-label">Metode</label><select class="form-select" name="method"><option value="credentials">Credentials</option><option value="invite_email">Invite Email</option><option value="license">License</option><option value="link">Access Link</option></select></div>
                     <div class="col-md-3"><label class="form-label">Max Slot</label><input class="form-control" type="number" name="max_slot" value="1"></div>
                     <div class="col-md-3"><label class="form-label">HPP</label><input class="form-control" type="number" name="hpp" value="0"></div>
-                    <div class="col-md-3"><label class="form-label">Durasi Expired</label><select class="form-select" name="expired_days"><?php foreach ($durations as $duration): ?><option value="<?= $duration->days; ?>" <?= $duration->is_default ? 'selected' : ''; ?>><?= h($duration->label); ?> - <?= (int) $duration->days; ?> hari</option><?php endforeach; ?><option value="30">30 Hari</option></select></div>
+                    <div class="col-md-3"><label class="form-label">Expired Akun</label><input class="form-control" type="date" name="expired_at"></div>
                     <div class="col-12">
                         <label class="form-label">Data Akun</label>
                         <textarea name="stock_lines" class="form-control stock-lines-input" rows="10" placeholder="user1@gmail.com|password123&#10;user2@gmail.com|pass456&#10;LICENSE-KEY-123" required></textarea>

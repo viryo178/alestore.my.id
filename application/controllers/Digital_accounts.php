@@ -201,7 +201,9 @@ class Digital_accounts extends MY_Controller
             }
         }
         $lines = preg_split('/\r\n|\r|\n/', (string) $this->input->post('stock_lines', true));
-        $days = (int) $this->input->post('expired_days', true);
+        $expiredAt = $this->input->post('expired_at', true)
+            ? date('Y-m-d H:i:s', strtotime($this->input->post('expired_at', true)))
+            : null;
         $created = 0;
 
         foreach ($lines as $line) {
@@ -225,7 +227,7 @@ class Digital_accounts extends MY_Controller
                 'status' => 'available',
                 'hpp' => $this->input->post('hpp', true) ?: 0,
                 'notes' => $this->input->post('notes', true),
-                'expired_at' => $days > 0 ? date('Y-m-d H:i:s', strtotime('+'.$days.' days')) : null,
+                'expired_at' => $expiredAt,
             ));
             $created++;
         }

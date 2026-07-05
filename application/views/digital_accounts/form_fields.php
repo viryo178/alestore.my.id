@@ -101,18 +101,7 @@ $hasVariationId = $this->db->field_exists('digital_product_variation_id', 'digit
 
     <div class="col-md-6">
         <label class="form-label">Expired Akun</label>
-        <input type="datetime-local" name="expired_at" class="form-control" value="<?= isset($row->expired_at) && $row->expired_at ? date('Y-m-d\TH:i', strtotime($row->expired_at)) : ''; ?>">
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">Pilih Durasi Cepat</label>
-        <select class="form-select expire-duration-picker" name="expired_days">
-            <option value="">Manual / tidak disetting</option>
-            <?php foreach (($durations ?? array()) as $duration): ?>
-                <option value="<?= (int) $duration->days; ?>" <?= !isset($row->id) && $duration->is_default ? 'selected' : ''; ?>><?= h($duration->label); ?> - <?= (int) $duration->days; ?> hari</option>
-            <?php endforeach; ?>
-        </select>
-        <div class="form-text">Memilih durasi akan mengisi tanggal expired otomatis dari hari ini.</div>
+        <input type="date" name="expired_at" class="form-control" value="<?= isset($row->expired_at) && $row->expired_at ? date('Y-m-d', strtotime($row->expired_at)) : ''; ?>">
     </div>
 
     <?php if ($hasSoldAt): ?>
