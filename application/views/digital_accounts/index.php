@@ -231,7 +231,7 @@ ksort($productNames);
                     <div class="col-md-6"><label class="form-label">Nama Produk</label><input type="text" name="name" class="form-control" list="productOptions" placeholder="Contoh: Canva Pro" required></div>
                     <div class="col-md-6"><label class="form-label">Variasi</label>
                         <?php if ($durations): ?>
-                            <select name="variations[]" class="form-select" multiple size="<?= min(5, max(3, count($durations))); ?>">
+                            <select name="variations" class="form-select">
                                 <?php foreach ($durations as $duration): ?>
                                     <option value="<?= h($duration->label); ?>" <?= $duration->is_default ? 'selected' : ''; ?>><?= h($duration->label); ?></option>
                                 <?php endforeach; ?>
@@ -264,7 +264,16 @@ ksort($productNames);
         foreach ($durations as $duration) {
             $durationLabels[$duration->label] = true;
         }
-        $customVarLabels = array_values(array_diff(array_keys($productVarLabels), array_keys($durationLabels)));
+        $selectedDuration = '';
+        foreach ($durations as $duration) {
+            if (isset($productVarLabels[$duration->label])) {
+                $selectedDuration = $duration->label;
+                break;
+            }
+            if ($duration->is_default && $selectedDuration === '') {
+                $selectedDuration = $duration->label;
+            }
+        }
     ?>
     <div class="modal fade" id="editProductModal<?= $product->id; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/products/'.$product->id); ?>" method="POST">
@@ -273,15 +282,14 @@ ksort($productNames);
                 <div class="col-md-6"><label class="form-label">Nama Produk</label><input type="text" name="name" class="form-control" value="<?= h($product->name); ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Variasi</label>
                     <?php if ($durations): ?>
-                        <select name="variations[]" class="form-select" multiple size="<?= min(5, max(3, count($durations))); ?>">
+                        <select name="variations" class="form-select">
                             <?php foreach ($durations as $duration): ?>
-                                <option value="<?= h($duration->label); ?>" <?= isset($productVarLabels[$duration->label]) ? 'selected' : ''; ?>><?= h($duration->label); ?></option>
+                                <option value="<?= h($duration->label); ?>" <?= $selectedDuration === $duration->label ? 'selected' : ''; ?>><?= h($duration->label); ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <?php foreach ($customVarLabels as $label): ?><input type="hidden" name="variations[]" value="<?= h($label); ?>"><?php endforeach; ?>
-                        <?php if ($customVarLabels): ?><div class="form-text">Variasi lain tetap disimpan: <?= h(implode(', ', $customVarLabels)); ?></div><?php else: ?><div class="form-text">Pilihan mengikuti daftar Durasi Expired.</div><?php endif; ?>
+                        <div class="form-text">Pilihan mengikuti daftar Durasi Expired.</div>
                     <?php else: ?>
-                        <?php foreach ($productVarLabels as $label => $_): ?><input type="hidden" name="variations[]" value="<?= h($label); ?>"><?php endforeach; ?>
+                        <?php foreach ($productVarLabels as $label => $_): ?><input type="hidden" name="variations" value="<?= h($label); ?>"><?php endforeach; ?>
                         <div class="alert alert-warning py-2 mb-0">Belum ada daftar durasi. Variasi lama tetap disimpan.</div>
                     <?php endif; ?>
                 </div>
