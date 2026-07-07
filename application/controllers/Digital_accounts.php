@@ -253,8 +253,7 @@ class Digital_accounts extends MY_Controller
             'notes' => $this->input->post('notes', true),
         ));
 
-        $variations = preg_split('/\r\n|\r|\n|,/', (string) $this->input->post('variations', true));
-        foreach ($variations as $variation) {
+        foreach ($this->posted_variation_labels() as $variation) {
             $variation = trim($variation);
             if ($variation !== '') {
                 $this->App_model->insert('digital_product_variations', array(
@@ -283,7 +282,7 @@ class Digital_accounts extends MY_Controller
         ));
 
         if ($this->db->table_exists('digital_product_variations')) {
-            $this->sync_product_variations($id, (string) $this->input->post('variations', true));
+            $this->sync_product_variations($id, $this->posted_variation_labels());
         }
 
         $this->db->group_start()
@@ -512,10 +511,28 @@ class Digital_accounts extends MY_Controller
         return $data;
     }
 
+    private function posted_variation_labels()
+    {
+        $posted = $this->input->post('variations', true);
+        if (is_array($posted)) {
+            return array_values(array_unique(array_filter(array_map('trim', $posted), 'strlen')));
+        }
+
+        $labels = array();
+        foreach (preg_split('/\r\n|\r|\n|,/', (string) $posted) as $label) {
+            $label = trim($label);
+            if ($label !== '') {
+                $labels[$label] = $label;
+            }
+        }
+        return array_values($labels);
+    }
+
     private function sync_product_variations($productId, $rawVariations)
     {
         $labels = array();
-        foreach (preg_split('/\r\n|\r|\n|,/', $rawVariations) as $label) {
+        $rawLabels = is_array($rawVariations) ? $rawVariations : preg_split('/\r\n|\r|\n|,/', (string) $rawVariations);
+        foreach ($rawLabels as $label) {
             $label = trim($label);
             if ($label !== '') {
                 $labels[$label] = $label;

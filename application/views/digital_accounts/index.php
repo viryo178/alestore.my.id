@@ -49,12 +49,17 @@ ksort($productNames);
     .account-method-card small{color:#8da0bd;display:block;margin-top:2px}
     .digital-account-expired-row td{background:rgba(212,155,31,.10)!important;color:#f8fbff!important}
     .digital-account-expired-row td .small,.digital-account-expired-row td .text-muted{color:#9fb5d4!important}
+    .duration-choice-grid{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .duration-choice{align-items:center;background:rgba(47,124,255,.08);border:1px solid rgba(47,124,255,.18);border-radius:8px;display:flex;gap:8px;min-height:40px;padding:9px 10px}
+    .duration-choice .form-check-input{flex:0 0 auto;margin:0}
+    .duration-choice span{color:#dce8ff;font-weight:650;line-height:1.2}
     .stock-lines-input{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     @media (max-width:767.98px){
         .digital-account-filter-row,.digital-account-table-row{align-items:stretch;flex-direction:column}
         .digital-account-filter-controls,.digital-account-actions{align-items:stretch}
         .datatable-filter-control,.datatable-search{min-width:100%}
         .account-method-grid{grid-template-columns:1fr}
+        .duration-choice-grid{grid-template-columns:1fr}
         [id^="stockProductModal"] .modal-dialog,[id^="stockLicenseModal"] .modal-dialog{height:100dvh;margin:0;max-width:none}
         [id^="stockProductModal"] .modal-content,[id^="stockLicenseModal"] .modal-content{border-radius:0;height:100dvh;max-height:100dvh;overflow:hidden}
         [id^="stockProductModal"] form,[id^="stockLicenseModal"] form{display:flex;flex-direction:column;height:100%;min-height:0}
@@ -229,7 +234,21 @@ ksort($productNames);
                 <div class="modal-header"><div><h5 class="modal-title"><i class="bi bi-box-seam text-warning"></i> Tambah Produk</h5><small class="text-muted">Buat katalog produk AI. Akun ditambahkan lewat tombol stok.</small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body"><div class="row g-4">
                     <div class="col-md-6"><label class="form-label">Nama Produk</label><input type="text" name="name" class="form-control" list="productOptions" placeholder="Contoh: Canva Pro" required></div>
-                    <div class="col-md-6"><label class="form-label">Variasi</label><textarea name="variations" class="form-control" rows="3" placeholder="Lifetime&#10;1 Bulan&#10;35 Days"></textarea><div class="form-text">Satu variasi per baris atau pisahkan dengan koma.</div></div>
+                    <div class="col-md-6"><label class="form-label">Variasi</label>
+                        <?php if ($durations): ?>
+                            <div class="duration-choice-grid">
+                                <?php foreach ($durations as $duration): ?>
+                                    <label class="duration-choice">
+                                        <input class="form-check-input" type="checkbox" name="variations[]" value="<?= h($duration->label); ?>" <?= $duration->is_default ? 'checked' : ''; ?>>
+                                        <span><?= h($duration->label); ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="form-text">Pilihan mengikuti daftar Durasi Expired.</div>
+                        <?php else: ?>
+                            <div class="alert alert-warning py-2 mb-0">Belum ada daftar durasi. Tambahkan di menu Durasi Expired.</div>
+                        <?php endif; ?>
+                    </div>
                     <div class="col-md-6"><label class="form-label">Kategori Akun</label><select name="account_type" class="form-select"><option value="private">Private</option><option value="sharing">Sharing</option></select></div>
                     <div class="col-md-6"><label class="form-label">Max Slot</label><input type="number" name="max_slot" class="form-control" value="1" min="1"></div>
                     <div class="col-md-6"><label class="form-label">Metode</label><select name="method" class="form-select"><option value="credentials">Credentials</option><option value="invite_email">Invite Email</option><option value="link">Link</option><option value="license">License</option></select></div>
@@ -244,12 +263,39 @@ ksort($productNames);
 
 <?php foreach ($digital_products as $product): ?>
     <?php $productVars = array_values(array_filter($variations, function ($variation) use ($product) { return (int) $variation->digital_product_id === (int) $product->id; })); ?>
+    <?php
+        $productVarLabels = array();
+        foreach ($productVars as $variation) {
+            $productVarLabels[$variation->label] = true;
+        }
+        $durationLabels = array();
+        foreach ($durations as $duration) {
+            $durationLabels[$duration->label] = true;
+        }
+        $customVarLabels = array_values(array_diff(array_keys($productVarLabels), array_keys($durationLabels)));
+    ?>
     <div class="modal fade" id="editProductModal<?= $product->id; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/products/'.$product->id); ?>" method="POST">
             <div class="modal-header"><div><h5 class="modal-title"><i class="bi bi-pencil-square text-primary"></i> Edit Produk</h5><small class="text-muted"><?= h($product->name); ?></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body"><div class="row g-4">
                 <div class="col-md-6"><label class="form-label">Nama Produk</label><input type="text" name="name" class="form-control" value="<?= h($product->name); ?>" required></div>
-                <div class="col-md-6"><label class="form-label">Variasi</label><textarea name="variations" class="form-control" rows="3"><?php foreach ($productVars as $variation): ?><?= h($variation->label)."\n"; ?><?php endforeach; ?></textarea></div>
+                <div class="col-md-6"><label class="form-label">Variasi</label>
+                    <?php if ($durations): ?>
+                        <div class="duration-choice-grid">
+                            <?php foreach ($durations as $duration): ?>
+                                <label class="duration-choice">
+                                    <input class="form-check-input" type="checkbox" name="variations[]" value="<?= h($duration->label); ?>" <?= isset($productVarLabels[$duration->label]) ? 'checked' : ''; ?>>
+                                    <span><?= h($duration->label); ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php foreach ($customVarLabels as $label): ?><input type="hidden" name="variations[]" value="<?= h($label); ?>"><?php endforeach; ?>
+                        <?php if ($customVarLabels): ?><div class="form-text">Variasi lain tetap disimpan: <?= h(implode(', ', $customVarLabels)); ?></div><?php else: ?><div class="form-text">Pilihan mengikuti daftar Durasi Expired.</div><?php endif; ?>
+                    <?php else: ?>
+                        <?php foreach ($productVarLabels as $label => $_): ?><input type="hidden" name="variations[]" value="<?= h($label); ?>"><?php endforeach; ?>
+                        <div class="alert alert-warning py-2 mb-0">Belum ada daftar durasi. Variasi lama tetap disimpan.</div>
+                    <?php endif; ?>
+                </div>
                 <div class="col-md-6"><label class="form-label">Kategori Akun</label><select name="account_type" class="form-select"><option value="private" <?= $product->account_type === 'private' ? 'selected' : ''; ?>>Private</option><option value="sharing" <?= $product->account_type === 'sharing' ? 'selected' : ''; ?>>Sharing</option></select></div>
                 <div class="col-md-6"><label class="form-label">Metode</label><select name="method" class="form-select"><?php foreach (array('credentials','invite_email','link','license') as $method): ?><option value="<?= $method; ?>" <?= $product->method === $method ? 'selected' : ''; ?>><?= h(ucfirst(str_replace('_',' ', $method))); ?></option><?php endforeach; ?></select></div>
                 <div class="col-md-6"><label class="form-label">Max Slot</label><input type="number" name="max_slot" class="form-control" value="<?= h($product->max_slot ?? 1); ?>" min="1"></div>
