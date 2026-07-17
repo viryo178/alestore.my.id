@@ -66,7 +66,7 @@ class Orders extends MY_Controller
             ->where('used_slot <', 1)
             ->count_all_results('digital_accounts');
         $sharingRows = $this->db
-            ->select('COALESCE(SUM(GREATEST(max_slot - used_slot, 0)), 0) total_slot', false)
+            ->select('COALESCE(SUM(GREATEST(CAST(max_slot AS SIGNED) - CAST(used_slot AS SIGNED), 0)), 0) total_slot', false)
             ->where('account_type', 'sharing')
             ->where('status', 'available')
             ->get('digital_accounts')
@@ -96,7 +96,7 @@ class Orders extends MY_Controller
             ->where('used_slot <', 1)
             ->count_all_results('digital_accounts');
         $sharingRows = $this->db
-            ->select('COALESCE(SUM(GREATEST(max_slot - used_slot, 0)), 0) total_slot', false)
+            ->select('COALESCE(SUM(GREATEST(CAST(max_slot AS SIGNED) - CAST(used_slot AS SIGNED), 0)), 0) total_slot', false)
             ->where('account_type', 'sharing')
             ->where('status', 'available')
             ->get('digital_accounts')
