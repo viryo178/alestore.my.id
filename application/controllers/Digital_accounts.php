@@ -128,7 +128,7 @@ class Digital_accounts extends MY_Controller
     {
         $data = array(
             'email' => $this->input->post('email', true),
-            'password' => $this->input->post('password', true),
+            'password' => $this->input->post('password', false),
             'status' => $this->normalize_account_status($this->input->post('status', true) ?: 'available'),
             'extra_info' => $this->input->post('extra_info', true),
             'notes' => $this->input->post('notes', true),
@@ -171,7 +171,7 @@ class Digital_accounts extends MY_Controller
         }
 
         $emails = (array) $this->input->post('emails', true);
-        $passwords = (array) $this->input->post('passwords', true);
+        $passwords = (array) $this->input->post('passwords', false);
         $updated = 0;
 
         foreach ($ids as $id) {
@@ -200,7 +200,7 @@ class Digital_accounts extends MY_Controller
                 $variationLabel = $variation->label;
             }
         }
-        $lines = preg_split('/\r\n|\r|\n/', (string) $this->input->post('stock_lines', true));
+        $lines = preg_split('/\r\n|\r|\n/', (string) $this->input->post('stock_lines', false));
         $expiredAt = $this->input->post('expired_at', true)
             ? date('Y-m-d H:i:s', strtotime($this->input->post('expired_at', true)))
             : null;
@@ -448,6 +448,7 @@ class Digital_accounts extends MY_Controller
             'account_type', 'email', 'password', 'extra_info', 'method', 'max_slot', 'used_slot',
             'status', 'hpp', 'notes', 'expired_at', 'sold_at'
         ));
+        $data['password'] = $this->input->post('password', false);
 
         foreach (array('digital_product_id', 'digital_product_variation_id') as $field) {
             if (isset($data[$field]) && $data[$field] === '') {
