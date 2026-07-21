@@ -12,13 +12,24 @@ class Digital_accounts extends MY_Controller
 
         if ($this->input->get('q')) {
             $q = $this->input->get('q', true);
-            $this->db->group_start()->like('a.product_name', $q)->or_like('a.email', $q)->or_like('a.variation', $q)->group_end();
+            $dateQuery = $this->parse_account_date_query($q);
+            $this->db->group_start()->like('a.product_name', $q)->or_like('a.email', $q)->or_like('a.variation', $q);
+            if ($dateQuery) {
+                $this->db->or_where('DATE(a.expired_at) =', $dateQuery);
+            }
+            $this->db->group_end();
         }
         if ($this->input->get('account_type') && $this->input->get('account_type') !== 'all') {
             $this->db->where('a.account_type', $this->input->get('account_type', true));
         }
         if ($this->input->get('status') && $this->input->get('status') !== 'all') {
             $this->db->where('a.status', $this->input->get('status', true));
+        }
+        if ($this->input->get('expired_date')) {
+            $expiredDate = $this->parse_account_date_query($this->input->get('expired_date', true));
+            if ($expiredDate) {
+                $this->db->where('DATE(a.expired_at) =', $expiredDate);
+            }
         }
 
         $rows = $this->db->order_by('a.id', 'DESC')->get()->result();
@@ -426,7 +437,12 @@ class Digital_accounts extends MY_Controller
     {
         if ($this->input->get('q')) {
             $q = $this->input->get('q', true);
-            $this->db->group_start()->like('product_name', $q)->or_like('email', $q)->or_like('variation', $q)->group_end();
+            $dateQuery = $this->parse_account_date_query($q);
+            $this->db->group_start()->like('product_name', $q)->or_like('email', $q)->or_like('variation', $q);
+            if ($dateQuery) {
+                $this->db->or_where('DATE(expired_at) =', $dateQuery);
+            }
+            $this->db->group_end();
         }
         if ($this->input->get('account_type') && $this->input->get('account_type') !== 'all') {
             $this->db->where('account_type', $this->input->get('account_type', true));
@@ -439,6 +455,49 @@ class Digital_accounts extends MY_Controller
                 $this->db->where('status', $status);
             }
         }
+        if ($this->input->get('expired_date')) {
+            $expiredDate = $this->parse_account_date_query($this->input->get('expired_date', true));
+            if ($expiredDate) {
+                $this->db->where('DATE(expired_at) =', $expiredDate);
+            }
+        }
+    }
+
+    private function parse_account_date_query($value)
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $year = (int) date('Y');
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value, $matches)) {
+            $year = (int) $matches[1];
+            $month = (int) $matches[2];
+            $day = (int) $matches[3];
+        } elseif (preg_match('/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/', $value, $matches)) {
+            $day = (int) $matches[1];
+            $month = (int) $matches[2];
+            if (!empty($matches[3])) {
+                $year = (int) $matches[3];
+                $year = $year < 100 ? 2000 + $year : $year;
+            }
+        } elseif (preg_match('/^(\d{2})(\d{2})(\d{2,4})?$/', $value, $matches)) {
+            $day = (int) $matches[1];
+            $month = (int) $matches[2];
+            if (!empty($matches[3])) {
+                $year = (int) $matches[3];
+                $year = $year < 100 ? 2000 + $year : $year;
+            }
+        } else {
+            return null;
+        }
+
+        if (!checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
     }
 
     private function account_data()

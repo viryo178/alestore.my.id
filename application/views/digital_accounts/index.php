@@ -175,6 +175,7 @@ ksort($productNames);
                         <div class="digital-account-filter-controls">
                             <div class="datatable-filter-control"><label class="form-label">Tipe</label><select class="form-select" id="typeFilter"><option value="all">Semua Tipe</option><option value="private">Private</option><option value="sharing">Sharing</option></select></div>
                             <div class="datatable-filter-control"><label class="form-label">Status</label><select class="form-select" id="statusFilter"><option value="all">Semua Status</option><?php foreach ($statusLabels as $key => $label): ?><option value="<?= $key; ?>"><?= h($label); ?></option><?php endforeach; ?></select></div>
+                            <div class="datatable-filter-control"><label class="form-label">Tanggal Expired</label><input type="date" class="form-control" id="expiredDateFilter" value="<?= h($this->input->get('expired_date')); ?>"></div>
                             <button type="button" class="btn btn-secondary" id="resetFilter">Reset</button>
                         </div>
                         <div class="digital-account-actions">
@@ -385,6 +386,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const search = document.getElementById('accountSearch');
     const type = document.getElementById('typeFilter');
     const status = document.getElementById('statusFilter');
+    const expiredDate = document.getElementById('expiredDateFilter');
     const perPage = document.getElementById('perPageFilter');
     const total = document.getElementById('totalAccounts');
     const visibleRows = document.getElementById('visibleRows');
@@ -450,8 +452,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function loadAccounts() {
-        if (!app || !tbody || !search || !type || !status || !perPage) return;
-        const params = new URLSearchParams({q: search.value, account_type: type.value, status: status.value, per_page: perPage.value, page: currentPage});
+        if (!app || !tbody || !search || !type || !status || !expiredDate || !perPage) return;
+        const params = new URLSearchParams({q: search.value, account_type: type.value, status: status.value, expired_date: expiredDate.value, per_page: perPage.value, page: currentPage});
         const response = await fetch(`${app.dataset.feedUrl}?${params.toString()}`, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
         const data = await response.json();
         currentPage = Number(data.page || 1);
@@ -473,6 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (search) search.addEventListener('input', function () { currentPage = 1; queueLoad(); });
     if (type) type.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
     if (status) status.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
+    if (expiredDate) expiredDate.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
     if (perPage) perPage.addEventListener('change', function () { currentPage = 1; loadAccounts(); });
     if (pagination) pagination.addEventListener('click', function (event) {
         const button = event.target.closest('[data-page]');
@@ -480,7 +483,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentPage = Number(button.dataset.page || 1);
         loadAccounts();
     });
-    if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; perPage.value = '10'; currentPage = 1; loadAccounts(); });
+    if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; expiredDate.value = ''; perPage.value = '10'; currentPage = 1; loadAccounts(); });
     loadAccounts();
     if (tbody) setInterval(loadAccounts, 5000);
 
