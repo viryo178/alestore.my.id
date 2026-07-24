@@ -43,6 +43,9 @@ ksort($productNames);
     .datatable-search{min-width:260px}.stock-summary-table th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
     .account-pagination{align-items:center;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px}
     .account-pagination .btn{min-width:36px}
+    .selected-account-tools{align-items:center;display:flex;flex-wrap:wrap;gap:8px}
+    .selected-account-tools .selected-count{font-weight:700;min-width:88px}
+    .account-select-cell{width:42px}
     .section-tabs{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
     .account-method-grid{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
     .account-method-card{align-items:flex-start;background:rgba(47,124,255,.08);border:1px solid rgba(47,124,255,.16);border-radius:8px;display:flex;gap:10px;padding:12px}
@@ -179,6 +182,11 @@ ksort($productNames);
                             <button type="button" class="btn btn-secondary" id="resetFilter">Reset</button>
                         </div>
                         <div class="digital-account-actions">
+                            <div class="selected-account-tools">
+                                <span class="selected-count text-muted"><span id="selectedAccountCount">0</span> dipilih</span>
+                                <button type="button" class="btn btn-outline-primary" id="bulkEditButton" data-bs-toggle="modal" data-bs-target="#bulkEditAccountModal" disabled><i class="bi bi-pencil-square"></i> Edit Dipilih</button>
+                                <button type="button" class="btn btn-outline-danger" id="bulkDeleteButton" data-bs-toggle="modal" data-bs-target="#bulkDeleteAccountModal" disabled><i class="bi bi-trash"></i> Hapus Dipilih</button>
+                            </div>
                             <a href="<?= site_url('digital-accounts/bulk/create'); ?>" class="btn btn-outline-primary"><i class="bi bi-archive"></i> Bulk Tambah</a>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal"><i class="bi bi-plus-circle"></i> Tambah Akun</button>
                         </div>
@@ -191,10 +199,11 @@ ksort($productNames);
 
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead><tr><th>#</th><th>Produk</th><th>Email Akun</th><th>Tipe</th><th>Slot</th><th>HPP / Modal</th><th>Status</th><th>Expired</th><th>Aksi</th></tr></thead>
+                        <thead><tr><th class="account-select-cell"><input class="form-check-input" type="checkbox" id="selectAllAccounts" aria-label="Pilih semua akun di halaman ini"></th><th>#</th><th>Produk</th><th>Email Akun</th><th>Tipe</th><th>Slot</th><th>HPP / Modal</th><th>Status</th><th>Expired</th><th>Aksi</th></tr></thead>
                         <tbody id="accountsTableBody">
                         <?php foreach ($rows as $account): ?>
                             <tr>
+                                <td><input class="form-check-input account-select" type="checkbox" value="<?= (int) $account->id; ?>" data-label="<?= h($account->email ?: $account->product_name); ?>" aria-label="Pilih akun <?= h($account->email ?: $account->product_name); ?>"></td>
                                 <td><?= (int) $account->id; ?></td>
                                 <td><strong><?= h($account->product_name); ?></strong><?php if ($account->variation): ?><div class="small text-muted"><?= h($account->variation); ?></div><?php endif; ?></td>
                                 <td><?= h($account->email ?: '-'); ?></td>
@@ -370,6 +379,53 @@ ksort($productNames);
     <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/store'); ?>" method="POST"><input type="hidden" name="_redirect_section" value="account-stock"><div class="modal-header"><h5 class="modal-title">Tambah Akun Digital</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><?php $row = null; $this->load->view('digital_accounts/form_fields', compact('row', 'products', 'durations')); ?></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Akun</button></div></form></div></div>
 </div>
 
+<div class="modal fade" id="bulkEditAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form action="<?= site_url('digital-accounts/bulk/update-selected'); ?>" method="POST" id="bulkEditAccountForm" onsubmit="return confirm('Apakah anda yakin ingin mengedit semua data yang dipilih?')">
+                <div id="bulkEditSelectedInputs"></div>
+                <div class="modal-header"><div><h5 class="modal-title"><i class="bi bi-pencil-square text-primary"></i> Edit Akun Terpilih</h5><small class="text-muted"><span class="bulk-selected-count">0</span> akun dipilih. Field kosong tidak akan diubah.</small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle"></i> Perubahan akan diterapkan ke semua akun yang dicentang.</div>
+                    <div class="row g-4">
+                        <div class="col-md-6"><label class="form-label">Produk AI</label><input type="text" name="product_name" class="form-control" list="productOptions" placeholder="Kosongkan jika tidak diubah"></div>
+                        <div class="col-md-6"><label class="form-label">Variasi</label><input type="text" name="variation" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
+                        <div class="col-md-6"><label class="form-label">Tipe Akun</label><select name="account_type" class="form-select"><option value="">Jangan ubah</option><option value="private">Private</option><option value="sharing">Sharing</option></select></div>
+                        <div class="col-md-6"><label class="form-label">Method</label><select name="method" class="form-select"><option value="">Jangan ubah</option><?php foreach (array('credentials' => 'Credentials', 'invite_email' => 'Invite Email', 'link' => 'Invite / Link', 'license' => 'License Key') as $value => $label): ?><option value="<?= $value; ?>"><?= h($label); ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-6"><label class="form-label">Status</label><select name="status" class="form-select"><option value="">Jangan ubah</option><?php foreach ($statusLabels as $key => $label): ?><option value="<?= $key; ?>"><?= h($label); ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-6"><label class="form-label">Email / Username Akun</label><input type="text" name="email" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
+                        <div class="col-md-6"><label class="form-label">Password / Link / License</label><input type="text" name="password" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
+                        <div class="col-md-6"><label class="form-label">Info Tambahan</label><input type="text" name="extra_info" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
+                        <div class="col-md-4"><label class="form-label">Max Slot</label><input type="number" name="max_slot" class="form-control" min="1" placeholder="Tidak diubah"></div>
+                        <div class="col-md-4"><label class="form-label">Slot Terpakai</label><input type="number" name="used_slot" class="form-control" min="0" placeholder="Tidak diubah"></div>
+                        <div class="col-md-4"><label class="form-label">HPP</label><input type="number" name="hpp" class="form-control" min="0" step="0.01" placeholder="Tidak diubah"></div>
+                        <div class="col-md-6"><label class="form-label">Expired Akun</label><input type="date" name="expired_at" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">Catatan</label><textarea name="notes" class="form-control" rows="3" placeholder="Kosongkan jika tidak diubah"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Simpan Edit Terpilih</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bulkDeleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="<?= site_url('digital-accounts/bulk/delete-selected'); ?>" method="POST" id="bulkDeleteAccountForm">
+                <div id="bulkDeleteSelectedInputs"></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Hapus Akun Terpilih</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p>Apakah anda yakin ingin menghapus semua data ini?</p>
+                    <div class="small text-muted mb-2"><span class="bulk-selected-count">0</span> akun dipilih.</div>
+                    <ul class="small mb-0" id="bulkDeletePreview"></ul>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Ya, Hapus Semua</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <?php foreach ($rows as $account): ?>
     <div class="modal fade" id="editAccountModal<?= $account->id; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/update/'.$account->id); ?>" method="POST"><?php if ((string) $this->input->get('edit') === (string) $account->id && $this->input->get('notify')): ?><input type="hidden" name="_resolve_notification" value="1"><?php endif; ?><div class="modal-header"><h5 class="modal-title">Edit Akun Digital</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><?php $row = $account; $this->load->view('digital_accounts/form_fields', compact('row', 'products', 'durations')); ?></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div></form></div></div>
@@ -395,9 +451,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const expiredCount = document.getElementById('expiredCount');
     const reset = document.getElementById('resetFilter');
     const pagination = document.getElementById('accountPagination');
+    const selectAllAccounts = document.getElementById('selectAllAccounts');
+    const selectedAccountCount = document.getElementById('selectedAccountCount');
+    const bulkEditButton = document.getElementById('bulkEditButton');
+    const bulkDeleteButton = document.getElementById('bulkDeleteButton');
+    const bulkEditSelectedInputs = document.getElementById('bulkEditSelectedInputs');
+    const bulkDeleteSelectedInputs = document.getElementById('bulkDeleteSelectedInputs');
+    const bulkDeletePreview = document.getElementById('bulkDeletePreview');
     const labels = <?= json_encode($statusLabels); ?>;
     const badgeClasses = <?= json_encode($statusBadgeClasses); ?>;
     let currentPage = 1;
+    const selectedAccounts = new Map();
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, function (char) {
@@ -409,7 +473,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!tbody) return;
         tbody.innerHTML = accounts.map(function (account) {
             const statusClass = badgeClasses[account.status] || 'bg-primary';
+            const label = account.email || account.product_name || `#${account.id}`;
+            const checked = selectedAccounts.has(String(account.id)) ? 'checked' : '';
             return `<tr class="${account.expired_warning ? 'digital-account-expired-row' : ''}">
+                <td><input class="form-check-input account-select" type="checkbox" value="${account.id}" data-label="${escapeHtml(label)}" aria-label="Pilih akun ${escapeHtml(label)}" ${checked}></td>
                 <td>${account.id}</td>
                 <td><strong>${escapeHtml(account.product_name)}</strong>${account.variation ? `<div class="small text-muted">${escapeHtml(account.variation)}</div>` : ''}</td>
                 <td>${escapeHtml(account.email || '-')}</td>
@@ -421,6 +488,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td><a href="${escapeHtml(account.edit_url)}" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${account.edit_modal}"><i class="bi bi-pencil"></i></a> <a href="${escapeHtml(account.delete_url)}" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#${account.delete_modal}"><i class="bi bi-trash"></i></a></td>
             </tr>`;
         }).join('');
+        syncSelectionState();
+    }
+
+    function selectedIds() {
+        return Array.from(selectedAccounts.keys());
+    }
+
+    function renderSelectedInputs(container) {
+        if (!container) return;
+        container.innerHTML = selectedIds().map(function (id) {
+            return `<input type="hidden" name="account_ids[]" value="${escapeHtml(id)}">`;
+        }).join('');
+    }
+
+    function syncSelectionState() {
+        const ids = selectedIds();
+        const count = ids.length;
+        if (selectedAccountCount) selectedAccountCount.textContent = count;
+        document.querySelectorAll('.bulk-selected-count').forEach(function (el) {
+            el.textContent = count;
+        });
+        if (bulkEditButton) bulkEditButton.disabled = count < 1;
+        if (bulkDeleteButton) bulkDeleteButton.disabled = count < 1;
+        renderSelectedInputs(bulkEditSelectedInputs);
+        renderSelectedInputs(bulkDeleteSelectedInputs);
+        if (bulkDeletePreview) {
+            bulkDeletePreview.innerHTML = Array.from(selectedAccounts.values()).slice(0, 8).map(function (label) {
+                return `<li>${escapeHtml(label)}</li>`;
+            }).join('') + (count > 8 ? `<li>dan ${count - 8} akun lainnya...</li>` : '');
+        }
+        if (selectAllAccounts && tbody) {
+            const visibleChecks = Array.from(tbody.querySelectorAll('.account-select'));
+            const checkedVisible = visibleChecks.filter(function (checkbox) { return checkbox.checked; }).length;
+            selectAllAccounts.checked = visibleChecks.length > 0 && checkedVisible === visibleChecks.length;
+            selectAllAccounts.indeterminate = checkedVisible > 0 && checkedVisible < visibleChecks.length;
+        }
     }
 
     function renderPagination(data) {
@@ -483,6 +586,29 @@ document.addEventListener('DOMContentLoaded', function () {
         currentPage = Number(button.dataset.page || 1);
         loadAccounts();
     });
+    if (tbody) tbody.addEventListener('change', function (event) {
+        const checkbox = event.target.closest('.account-select');
+        if (!checkbox) return;
+        if (checkbox.checked) {
+            selectedAccounts.set(String(checkbox.value), checkbox.dataset.label || `#${checkbox.value}`);
+        } else {
+            selectedAccounts.delete(String(checkbox.value));
+        }
+        syncSelectionState();
+    });
+    if (selectAllAccounts && tbody) selectAllAccounts.addEventListener('change', function () {
+        tbody.querySelectorAll('.account-select').forEach(function (checkbox) {
+            checkbox.checked = selectAllAccounts.checked;
+            if (checkbox.checked) {
+                selectedAccounts.set(String(checkbox.value), checkbox.dataset.label || `#${checkbox.value}`);
+            } else {
+                selectedAccounts.delete(String(checkbox.value));
+            }
+        });
+        syncSelectionState();
+    });
+    if (bulkEditButton) bulkEditButton.addEventListener('click', syncSelectionState);
+    if (bulkDeleteButton) bulkDeleteButton.addEventListener('click', syncSelectionState);
     if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; expiredDate.value = ''; perPage.value = '10'; currentPage = 1; loadAccounts(); });
     loadAccounts();
     if (tbody) setInterval(loadAccounts, 5000);
