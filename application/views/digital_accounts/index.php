@@ -184,7 +184,6 @@ ksort($productNames);
                         <div class="digital-account-actions">
                             <div class="selected-account-tools">
                                 <span class="selected-count text-muted"><span id="selectedAccountCount">0</span> dipilih</span>
-                                <button type="button" class="btn btn-outline-primary" id="bulkEditButton" data-bs-toggle="modal" data-bs-target="#bulkEditAccountModal" disabled><i class="bi bi-pencil-square"></i> Edit Dipilih</button>
                                 <button type="button" class="btn btn-outline-danger" id="bulkDeleteButton" data-bs-toggle="modal" data-bs-target="#bulkDeleteAccountModal" disabled><i class="bi bi-trash"></i> Hapus Dipilih</button>
                             </div>
                             <a href="<?= site_url('digital-accounts/bulk/create'); ?>" class="btn btn-outline-primary"><i class="bi bi-archive"></i> Bulk Tambah</a>
@@ -379,36 +378,6 @@ ksort($productNames);
     <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/store'); ?>" method="POST"><input type="hidden" name="_redirect_section" value="account-stock"><div class="modal-header"><h5 class="modal-title">Tambah Akun Digital</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><?php $row = null; $this->load->view('digital_accounts/form_fields', compact('row', 'products', 'durations')); ?></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Akun</button></div></form></div></div>
 </div>
 
-<div class="modal fade" id="bulkEditAccountModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <form action="<?= site_url('digital-accounts/bulk/update-selected'); ?>" method="POST" id="bulkEditAccountForm" onsubmit="return confirm('Apakah anda yakin ingin mengedit semua data yang dipilih?')">
-                <div id="bulkEditSelectedInputs"></div>
-                <div class="modal-header"><div><h5 class="modal-title"><i class="bi bi-pencil-square text-primary"></i> Edit Akun Terpilih</h5><small class="text-muted"><span class="bulk-selected-count">0</span> akun dipilih. Field kosong tidak akan diubah.</small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle"></i> Perubahan akan diterapkan ke semua akun yang dicentang.</div>
-                    <div class="row g-4">
-                        <div class="col-md-6"><label class="form-label">Produk AI</label><input type="text" name="product_name" class="form-control" list="productOptions" placeholder="Kosongkan jika tidak diubah"></div>
-                        <div class="col-md-6"><label class="form-label">Variasi</label><input type="text" name="variation" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
-                        <div class="col-md-6"><label class="form-label">Tipe Akun</label><select name="account_type" class="form-select"><option value="">Jangan ubah</option><option value="private">Private</option><option value="sharing">Sharing</option></select></div>
-                        <div class="col-md-6"><label class="form-label">Method</label><select name="method" class="form-select"><option value="">Jangan ubah</option><?php foreach (array('credentials' => 'Credentials', 'invite_email' => 'Invite Email', 'link' => 'Invite / Link', 'license' => 'License Key') as $value => $label): ?><option value="<?= $value; ?>"><?= h($label); ?></option><?php endforeach; ?></select></div>
-                        <div class="col-md-6"><label class="form-label">Status</label><select name="status" class="form-select"><option value="">Jangan ubah</option><?php foreach ($statusLabels as $key => $label): ?><option value="<?= $key; ?>"><?= h($label); ?></option><?php endforeach; ?></select></div>
-                        <div class="col-md-6"><label class="form-label">Email / Username Akun</label><input type="text" name="email" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
-                        <div class="col-md-6"><label class="form-label">Password / Link / License</label><input type="text" name="password" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
-                        <div class="col-md-6"><label class="form-label">Info Tambahan</label><input type="text" name="extra_info" class="form-control" placeholder="Kosongkan jika tidak diubah"></div>
-                        <div class="col-md-4"><label class="form-label">Max Slot</label><input type="number" name="max_slot" class="form-control" min="1" placeholder="Tidak diubah"></div>
-                        <div class="col-md-4"><label class="form-label">Slot Terpakai</label><input type="number" name="used_slot" class="form-control" min="0" placeholder="Tidak diubah"></div>
-                        <div class="col-md-4"><label class="form-label">HPP</label><input type="number" name="hpp" class="form-control" min="0" step="0.01" placeholder="Tidak diubah"></div>
-                        <div class="col-md-6"><label class="form-label">Expired Akun</label><input type="date" name="expired_at" class="form-control"></div>
-                        <div class="col-12"><label class="form-label">Catatan</label><textarea name="notes" class="form-control" rows="3" placeholder="Kosongkan jika tidak diubah"></textarea></div>
-                    </div>
-                </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Simpan Edit Terpilih</button></div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <div class="modal fade" id="bulkDeleteAccountModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -453,9 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const pagination = document.getElementById('accountPagination');
     const selectAllAccounts = document.getElementById('selectAllAccounts');
     const selectedAccountCount = document.getElementById('selectedAccountCount');
-    const bulkEditButton = document.getElementById('bulkEditButton');
     const bulkDeleteButton = document.getElementById('bulkDeleteButton');
-    const bulkEditSelectedInputs = document.getElementById('bulkEditSelectedInputs');
     const bulkDeleteSelectedInputs = document.getElementById('bulkDeleteSelectedInputs');
     const bulkDeletePreview = document.getElementById('bulkDeletePreview');
     const labels = <?= json_encode($statusLabels); ?>;
@@ -509,9 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.bulk-selected-count').forEach(function (el) {
             el.textContent = count;
         });
-        if (bulkEditButton) bulkEditButton.disabled = count < 1;
         if (bulkDeleteButton) bulkDeleteButton.disabled = count < 1;
-        renderSelectedInputs(bulkEditSelectedInputs);
         renderSelectedInputs(bulkDeleteSelectedInputs);
         if (bulkDeletePreview) {
             bulkDeletePreview.innerHTML = Array.from(selectedAccounts.values()).slice(0, 8).map(function (label) {
@@ -607,7 +572,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         syncSelectionState();
     });
-    if (bulkEditButton) bulkEditButton.addEventListener('click', syncSelectionState);
     if (bulkDeleteButton) bulkDeleteButton.addEventListener('click', syncSelectionState);
     if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; expiredDate.value = ''; perPage.value = '10'; currentPage = 1; loadAccounts(); });
     loadAccounts();

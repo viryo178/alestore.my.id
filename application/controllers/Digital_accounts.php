@@ -86,48 +86,6 @@ class Digital_accounts extends MY_Controller
         $this->redirect_success('digital-accounts', 'Akun digital berhasil dihapus.');
     }
 
-    public function bulk_update_selected()
-    {
-        $ids = $this->selected_account_ids();
-        if (!$ids) {
-            $this->redirect_success('digital-accounts?section=account-stock', 'Pilih akun yang ingin diedit.');
-            return;
-        }
-
-        $data = array();
-        foreach (array('product_name', 'variation', 'account_type', 'method', 'status', 'email', 'password', 'extra_info', 'max_slot', 'used_slot', 'hpp', 'notes', 'expired_at') as $field) {
-            $value = $field === 'password'
-                ? $this->input->post($field, false)
-                : $this->input->post($field, true);
-            if ($value === null || $value === '') {
-                continue;
-            }
-            $data[$field] = $value;
-        }
-
-        if (!$data) {
-            $this->redirect_success('digital-accounts?section=account-stock', 'Tidak ada perubahan yang dipilih.');
-            return;
-        }
-
-        if (isset($data['expired_at'])) {
-            $data['expired_at'] = date('Y-m-d H:i:s', strtotime($data['expired_at']));
-        }
-        if (isset($data['status'])) {
-            $data['status'] = $this->normalize_account_status($data['status']);
-        }
-        if (isset($data['max_slot'])) {
-            $data['max_slot'] = max(1, (int) $data['max_slot']);
-        }
-        if (isset($data['used_slot'])) {
-            $data['used_slot'] = max(0, (int) $data['used_slot']);
-        }
-
-        $data = $this->filter_existing_fields('digital_accounts', $data);
-        $this->db->where_in('id', $ids)->update('digital_accounts', $data);
-        $this->redirect_success('digital-accounts?section=account-stock', count($ids).' akun terpilih berhasil diedit.');
-    }
-
     public function bulk_delete_selected()
     {
         $ids = $this->selected_account_ids();
