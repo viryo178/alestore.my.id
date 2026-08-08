@@ -5,6 +5,9 @@ class Digital_accounts extends MY_Controller
 {
     public function index()
     {
+        $this->cleanup_old_leonardo_accounts();
+        $section = $this->input->get('section', true) ?: 'account-stock';
+
         $this->db->select('a.*, p.name product_master, v.label variation_master')
             ->from('digital_accounts a')
             ->join('digital_products p', 'p.id = a.digital_product_id', 'left')
@@ -32,6 +35,14 @@ class Digital_accounts extends MY_Controller
             }
         }
 
+        // The account table is rendered through the paginated feed. Loading every
+        // account here also generated thousands of Bootstrap modals and made the
+        // page unusable on larger databases.
+        if ($section === 'account-stock') {
+            $this->db->limit(10);
+        } elseif ($section === 'license-stock') {
+            $this->db->where_in('a.method', array('license', 'link'));
+        }
         $rows = $this->db->order_by('a.id', 'DESC')->get()->result();
         $digitalProducts = $this->App_model->all('digital_products', 'name ASC');
         $variations = $this->db->table_exists('digital_product_variations') ? $this->App_model->all('digital_product_variations', 'label ASC') : array();
@@ -50,10 +61,10 @@ class Digital_accounts extends MY_Controller
             'products' => $digitalProducts,
             'digital_products' => $digitalProducts,
             'variations' => $variations,
-            'product_stocks' => $this->product_stocks($rows, $digitalProducts, $variations),
-            'license_stocks' => $this->license_stocks($rows),
+            'product_stocks' => $section === 'product-stock' ? $this->product_stocks($rows, $digitalProducts, $variations) : array(),
+            'license_stocks' => $section === 'license-stock' ? $this->license_stocks($rows) : array(),
             'durations' => $this->db->table_exists('expire_durations') ? $this->App_model->all('expire_durations', 'days ASC') : array(),
-            'stock_section' => $this->input->get('section', true) ?: 'account-stock',
+            'stock_section' => $section,
         ));
     }
 
@@ -357,25 +368,23 @@ class Digital_accounts extends MY_Controller
 
     public function feed()
     {
+        $this->cleanup_old_leonardo_accounts();
         $this->output->set_content_type('application/json');
         $filteredTotal = $this->count_filtered_account_feed();
 
         $perPage = $this->input->get('per_page', true) ?: '10';
-        $allowedPerPage = array('10', '25', '50', 'all');
+        $allowedPerPage = array('10', '25', '50', '100');
         if (!in_array($perPage, $allowedPerPage, true)) {
             $perPage = '10';
         }
         $page = max(1, (int) ($this->input->get('page', true) ?: 1));
-        $totalPages = $perPage === 'all' ? 1 : max(1, (int) ceil($filteredTotal / (int) $perPage));
+        $totalPages = max(1, (int) ceil($filteredTotal / (int) $perPage));
         $page = min($page, $totalPages);
 
-        $this->db->from('digital_accounts');
+        $this->db->select('id, product_name, variation, email, account_type, method, max_slot, used_slot, status, hpp, expired_at')
+            ->from('digital_accounts');
         $this->apply_account_feed_filters();
-        if ($perPage !== 'all') {
-            $this->db->limit((int) $perPage, ($page - 1) * (int) $perPage);
-        } else {
-            $page = 1;
-        }
+        $this->db->limit((int) $perPage, ($page - 1) * (int) $perPage);
 
         $accounts = $this->db->order_by('id', 'DESC')->get()->result();
         $items = array();
@@ -394,8 +403,6 @@ class Digital_accounts extends MY_Controller
                 'status_label' => ucwords(str_replace('_', ' ', $status)),
                 'expired_at' => $account->expired_at ? date('d/m/Y', strtotime($account->expired_at)) : null,
                 'expired_warning' => $account->expired_at && strtotime($account->expired_at) <= strtotime('+2 days'),
-                'edit_modal' => 'editAccountModal'.$account->id,
-                'delete_modal' => 'deleteAccountModal'.$account->id,
                 'edit_url' => site_url('digital-accounts/edit/'.$account->id),
                 'delete_url' => site_url('digital-accounts/delete/'.$account->id),
             );
@@ -423,6 +430,24 @@ class Digital_accounts extends MY_Controller
         $this->db->from('digital_accounts');
         $this->apply_account_feed_filters();
         return $this->db->count_all_results();
+    }
+
+    /**
+     * Remove only old sold Leonardo credit accounts. The fallback dates support
+     * legacy rows created before sold_at was consistently populated.
+     */
+    private function cleanup_old_leonardo_accounts()
+    {
+        if (!$this->db->table_exists('digital_accounts')) {
+            return;
+        }
+
+        $cutoff = date('Y-m-d H:i:s', strtotime('-7 days'));
+        $this->db
+            ->where('product_name', 'LEONARDO 8500 CREDIT')
+            ->where_in('status', array('sold', 'unavailable', 'unvailabel'))
+            ->where('COALESCE(sold_at, updated_at, created_at) < '.$this->db->escape($cutoff), null, false)
+            ->delete('digital_accounts');
     }
 
     private function selected_account_ids()

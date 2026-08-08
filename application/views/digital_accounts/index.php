@@ -191,7 +191,7 @@ ksort($productNames);
                         </div>
                     </div>
                     <div class="digital-account-table-row">
-                        <div class="datatable-length"><select class="form-select form-select-sm" id="perPageFilter"><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="all">All</option></select><span>entries per page</span></div>
+                        <div class="datatable-length"><select class="form-select form-select-sm" id="perPageFilter"><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select><span>entries per page</span></div>
                         <div class="datatable-search"><input type="text" class="form-control" id="accountSearch" value="<?= h($this->input->get('q')); ?>" placeholder="Search..."></div>
                     </div>
                 </div>
@@ -395,14 +395,14 @@ ksort($productNames);
     </div>
 </div>
 
-<?php foreach ($rows as $account): ?>
+<?php if ($section === 'account-stock'): foreach ($rows as $account): ?>
     <div class="modal fade" id="editAccountModal<?= $account->id; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form action="<?= site_url('digital-accounts/update/'.$account->id); ?>" method="POST"><?php if ((string) $this->input->get('edit') === (string) $account->id && $this->input->get('notify')): ?><input type="hidden" name="_resolve_notification" value="1"><?php endif; ?><div class="modal-header"><h5 class="modal-title">Edit Akun Digital</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><?php $row = $account; $this->load->view('digital_accounts/form_fields', compact('row', 'products', 'durations')); ?></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div></form></div></div>
     </div>
     <div class="modal fade" id="deleteAccountModal<?= $account->id; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Hapus Akun</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">Yakin hapus akun <strong><?= h($account->email ?: $account->product_name); ?></strong>?</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><a href="<?= site_url('digital-accounts/delete/'.$account->id); ?>" class="btn btn-danger">Hapus</a></div></div></div>
     </div>
-<?php endforeach; ?>
+<?php endforeach; endif; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${escapeHtml(account.hpp)}</td>
                 <td><span class="badge ${escapeHtml(statusClass)}">${escapeHtml(labels[account.status] || account.status_label)}</span></td>
                 <td>${escapeHtml(account.expired_at || '-')}</td>
-                <td><a href="${escapeHtml(account.edit_url)}" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${account.edit_modal}"><i class="bi bi-pencil"></i></a> <a href="${escapeHtml(account.delete_url)}" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#${account.delete_modal}"><i class="bi bi-trash"></i></a></td>
+                <td><a href="${escapeHtml(account.edit_url)}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a> <a href="${escapeHtml(account.delete_url)}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus akun ini?')"><i class="bi bi-trash"></i></a></td>
             </tr>`;
         }).join('');
         syncSelectionState();
@@ -575,7 +575,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bulkDeleteButton) bulkDeleteButton.addEventListener('click', syncSelectionState);
     if (reset) reset.addEventListener('click', function () { search.value = ''; type.value = 'all'; status.value = 'all'; expiredDate.value = ''; perPage.value = '10'; currentPage = 1; loadAccounts(); });
     loadAccounts();
-    if (tbody) setInterval(loadAccounts, 5000);
+    if (tbody) setInterval(function () {
+        if (!document.hidden) loadAccounts();
+    }, 30000);
 
     function applyDuration(picker, force) {
         const days = Number(picker.value);

@@ -135,6 +135,7 @@ CREATE TABLE `digital_accounts` (
   KEY `digital_accounts_product_name_index` (`product_name`),
   KEY `digital_accounts_status_index` (`status`),
   KEY `digital_accounts_expired_at_index` (`expired_at`),
+  KEY `digital_accounts_cleanup_index` (`product_name`, `status`, `sold_at`),
   CONSTRAINT `digital_accounts_product_fk`
     FOREIGN KEY (`digital_product_id`) REFERENCES `digital_products` (`id`)
     ON DELETE SET NULL ON UPDATE CASCADE,
