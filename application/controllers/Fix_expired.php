@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class FixExpired extends CI_Controller {
+class Fix_expired extends CI_Controller {
 
     public function index() {
         $this->db->select('id, variation, sold_at, expired_at');
