@@ -144,7 +144,7 @@ class Digital_accounts extends MY_Controller
             }
         }
 
-        $rows = $this->db->order_by('expired_at', 'ASC')->limit(500)->get()->result();
+        $rows = $this->db->order_by('expired_at', 'ASC')->limit(5000)->get()->result();
 
         $this->render('digital_accounts/password_expired', array(
             'title' => 'Ganti Password Exp',
