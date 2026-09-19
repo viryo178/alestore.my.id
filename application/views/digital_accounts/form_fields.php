@@ -116,3 +116,79 @@ $hasVariationId = $this->db->field_exists('digital_product_variation_id', 'digit
         <textarea name="notes" class="form-control" rows="3" placeholder="PIN, profil, buyer, catatan admin"><?= h($row->notes ?? ''); ?></textarea>
     </div>
 </div>
+
+<script>
+(function() {
+    function calculateExpiredAt() {
+        let variationText = '';
+        const variationInput = document.querySelector('input[name="variation"]');
+        if (variationInput) {
+            variationText = variationInput.value;
+        }
+        
+        const variationSelect = document.querySelector('select[name="digital_product_variation_id"]');
+        if (!variationText && variationSelect && variationSelect.selectedIndex > 0) {
+            variationText = variationSelect.options[variationSelect.selectedIndex].text;
+        }
+
+        if (!variationText) return;
+
+        let regex = /(\d+)\s*(bulan|month|hari|day|tahun|year)/i;
+        let match = variationText.match(regex);
+
+        if (match) {
+            let num = parseInt(match[1]);
+            let unit = match[2].toLowerCase();
+
+            let soldAtInput = document.querySelector('input[name="sold_at"]');
+            let baseDate = new Date();
+            if (soldAtInput && soldAtInput.value) {
+                baseDate = new Date(soldAtInput.value);
+            }
+
+            if (isNaN(baseDate.getTime())) {
+                baseDate = new Date();
+            }
+
+            if (unit.startsWith('bulan') || unit.startsWith('month')) {
+                baseDate.setMonth(baseDate.getMonth() + num);
+            } else if (unit.startsWith('hari') || unit.startsWith('day')) {
+                baseDate.setDate(baseDate.getDate() + num);
+            } else if (unit.startsWith('tahun') || unit.startsWith('year')) {
+                baseDate.setFullYear(baseDate.getFullYear() + num);
+            }
+
+            let year = baseDate.getFullYear();
+            let month = String(baseDate.getMonth() + 1).padStart(2, '0');
+            let day = String(baseDate.getDate()).padStart(2, '0');
+
+            let expiredAtInput = document.querySelector('input[name="expired_at"]');
+            if (expiredAtInput) {
+                expiredAtInput.value = `${year}-${month}-${day}`;
+            }
+        }
+    }
+
+    document.addEventListener('input', function(e) {
+        if (e.target && (e.target.name === 'variation' || e.target.name === 'sold_at')) {
+            calculateExpiredAt();
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        if (e.target && (e.target.name === 'digital_product_variation_id' || e.target.name === 'sold_at')) {
+            // Also try to copy variation select text to variation input if empty
+            if (e.target.name === 'digital_product_variation_id') {
+                const variationInput = document.querySelector('input[name="variation"]');
+                if (variationInput && !variationInput.value && e.target.selectedIndex > 0) {
+                    variationInput.value = e.target.options[e.target.selectedIndex].text;
+                }
+            }
+            calculateExpiredAt();
+        }
+    });
+
+    // Jalankan kalkulasi saat halaman pertama kali dibuka
+    calculateExpiredAt();
+})();
+</script>
