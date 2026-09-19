@@ -118,7 +118,7 @@ $hasVariationId = $this->db->field_exists('digital_product_variation_id', 'digit
 </div>
 
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     function calculateExpiredAt() {
         let variationText = '';
         const variationInput = document.querySelector('input[name="variation"]');
@@ -177,7 +177,6 @@ $hasVariationId = $this->db->field_exists('digital_product_variation_id', 'digit
 
     document.addEventListener('change', function(e) {
         if (e.target && (e.target.name === 'digital_product_variation_id' || e.target.name === 'sold_at')) {
-            // Also try to copy variation select text to variation input if empty
             if (e.target.name === 'digital_product_variation_id') {
                 const variationInput = document.querySelector('input[name="variation"]');
                 if (variationInput && !variationInput.value && e.target.selectedIndex > 0) {
@@ -189,6 +188,6 @@ $hasVariationId = $this->db->field_exists('digital_product_variation_id', 'digit
     });
 
     // Jalankan kalkulasi saat halaman pertama kali dibuka
-    calculateExpiredAt();
-})();
+    setTimeout(calculateExpiredAt, 500); // delay slighty to ensure browser autofill completes
+});
 </script>
