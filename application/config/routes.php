@@ -65,6 +65,7 @@ $route['digital-accounts/feed'] = 'digital_accounts/feed';
 $route['digital-accounts/password-expired'] = 'digital_accounts/password_expired';
 $route['digital-accounts/password-expired/update/(:num)'] = 'digital_accounts/update_expired_password/$1';
 $route['digital-accounts/password-expired/bulk-update'] = 'digital_accounts/bulk_update_expired_password';
+$route['digital-accounts/password-expired/bulk-delete'] = 'digital_accounts/bulk_delete_expired_password';
 $route['digital-accounts/bulk/create'] = 'digital_accounts/bulk_create';
 $route['digital-accounts/bulk/delete-selected'] = 'digital_accounts/bulk_delete_selected';
 $route['digital-accounts/bulk'] = 'digital_accounts/bulk_store';

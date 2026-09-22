@@ -87,6 +87,7 @@ foreach ($rows as $account) {
                 </div>
                 <div class="action-group">
                     <a class="btn btn-outline-primary" href="<?= site_url('digital-accounts/bulk/create'); ?>"><i class="bi bi-archive"></i> Bulk Tambah</a>
+                    <button class="btn btn-outline-danger" type="button" id="bulkDeleteExpiredButton" data-bs-toggle="modal" data-bs-target="#bulkDeleteExpiredModal" disabled><i class="bi bi-trash"></i> Hapus (<span id="bulkDeleteCount">0</span>)</button>
                     <button class="btn btn-outline-primary" type="button" id="bulkEditButton" data-bs-toggle="modal" data-bs-target="#bulkEditExpiredModal" disabled><i class="bi bi-pencil-square"></i> Bulk Edit (<span id="bulkEditCount">0</span>)</button>
                     <a class="btn btn-primary" href="<?= site_url('digital-accounts/create'); ?>"><i class="bi bi-plus-circle"></i> Tambah Akun</a>
                 </div>
@@ -96,7 +97,9 @@ foreach ($rows as $account) {
                 <table class="table table-hover align-middle datatable">
                     <thead>
                         <tr>
-                            <th style="width:70px">#</th>
+                            <th style="width:70px">
+                                <input class="form-check-input" type="checkbox" id="selectAllExpiredAccounts">
+                            </th>
                             <th>Produk</th>
                             <th>Email Akun</th>
                             <th>Tipe</th>
@@ -290,6 +293,23 @@ foreach ($rows as $account) {
     </div>
 </div>
 
+<div class="modal fade" id="bulkDeleteExpiredModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="<?= site_url('digital-accounts/password-expired/bulk-delete'); ?>" method="POST" id="bulkDeleteExpiredForm">
+                <div id="bulkDeleteExpiredSelectedInputs"></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Hapus Akun Terpilih</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p>Apakah anda yakin ingin menghapus semua akun expired ini?</p>
+                    <div class="small text-muted mb-2"><span id="bulkDeleteExpiredModalCount">0</span> akun dipilih.</div>
+                    <ul class="small mb-0" id="bulkDeleteExpiredPreview"></ul>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Ya, Hapus Semua</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const checks = Array.from(document.querySelectorAll('.expired-account-check'));
@@ -298,6 +318,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const bulkCount = document.getElementById('bulkEditCount');
     const bulkModalCount = document.getElementById('bulkModalCount');
     const bulkSelectedInputs = document.getElementById('bulkSelectedInputs');
+
+    const bulkDeleteButton = document.getElementById('bulkDeleteExpiredButton');
+    const bulkDeleteCount = document.getElementById('bulkDeleteCount');
+    const bulkDeleteModalCount = document.getElementById('bulkDeleteExpiredModalCount');
+    const bulkDeleteInputs = document.getElementById('bulkDeleteExpiredSelectedInputs');
+    const bulkDeletePreview = document.getElementById('bulkDeleteExpiredPreview');
 
     function selectedChecks() {
         return checks.filter(function (check) { return check.checked; });
@@ -314,7 +340,27 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bulkCount) bulkCount.textContent = selected.length;
         if (bulkModalCount) bulkModalCount.textContent = selected.length;
         if (bulkButton) bulkButton.disabled = selected.length === 0;
+
+        if (bulkDeleteCount) bulkDeleteCount.textContent = selected.length;
+        if (bulkDeleteModalCount) bulkDeleteModalCount.textContent = selected.length;
+        if (bulkDeleteButton) bulkDeleteButton.disabled = selected.length === 0;
+
         if (selectAll) selectAll.checked = checks.length > 0 && selected.length === checks.length;
+        
+        if (bulkDeleteInputs) {
+            bulkDeleteInputs.innerHTML = selected.length ? selected.map(function (check) {
+                return `<input type="hidden" name="account_ids[]" value="${escapeHtml(check.value)}">`;
+            }).join('') : '';
+        }
+        
+        if (bulkDeletePreview) {
+            bulkDeletePreview.innerHTML = selected.length ? selected.slice(0, 8).map(function (check) {
+                const product = escapeHtml(check.dataset.product || 'Tanpa Produk');
+                const email = escapeHtml(check.dataset.email || '');
+                return `<li>${product}${email ? ` - ${email}` : ''}</li>`;
+            }).join('') + (selected.length > 8 ? `<li>dan ${selected.length - 8} akun lainnya...</li>` : '') : '';
+        }
+
         if (bulkSelectedInputs) {
             bulkSelectedInputs.innerHTML = selected.length ? selected.map(function (check) {
                 const id = escapeHtml(check.value);

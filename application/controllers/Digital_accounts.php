@@ -109,6 +109,18 @@ class Digital_accounts extends MY_Controller
         $this->redirect_success('digital-accounts?section=account-stock', count($ids).' akun terpilih berhasil dihapus.');
     }
 
+    public function bulk_delete_expired_password()
+    {
+        $ids = $this->selected_account_ids();
+        if (!$ids) {
+            $this->redirect_success('digital-accounts/password-expired', 'Pilih akun yang ingin dihapus.');
+            return;
+        }
+
+        $this->db->where_in('id', $ids)->delete('digital_accounts');
+        $this->redirect_success('digital-accounts/password-expired', count($ids).' akun terpilih berhasil dihapus.');
+    }
+
     public function bulk_create()
     {
         $this->render('digital_accounts/bulk_create', array(
