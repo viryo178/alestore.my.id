@@ -53,6 +53,8 @@ ksort($productNames);
     .digital-account-expired-row td{background:rgba(212,155,31,.10)!important;color:#f8fbff!important}
     .digital-account-expired-row td .small,.digital-account-expired-row td .text-muted{color:#9fb5d4!important}
     .stock-lines-input{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .form-check-input { background-color: transparent; border-color: rgba(141, 160, 189, 0.4); }
+    .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
     @media (max-width:767.98px){
         .digital-account-filter-row,.digital-account-table-row{align-items:stretch;flex-direction:column}
         .digital-account-filter-controls,.digital-account-actions{align-items:stretch}

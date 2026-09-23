@@ -41,6 +41,8 @@ foreach ($rows as $account) {
     .password-exp-page .expired-date{color:#e04e6c;font-weight:700;white-space:nowrap}
     .password-exp-page .row-subtext{color:#8da0bd;display:block;font-size:12px;margin-top:2px}
     .password-exp-page .table-actions{display:flex;gap:6px;justify-content:flex-end}
+    .password-exp-page .form-check-input { background-color: transparent; border-color: rgba(141, 160, 189, 0.4); }
+    .password-exp-page .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
     @media (max-width: 767.98px){
         .password-exp-page .summary-grid{grid-template-columns:1fr}
         .password-exp-page .toolbar,.password-exp-page .filter-group,.password-exp-page .action-group{align-items:stretch;flex-direction:column}
@@ -97,7 +99,7 @@ foreach ($rows as $account) {
                 <table class="table table-hover align-middle datatable">
                     <thead>
                         <tr>
-                            <th style="width:70px">
+                            <th style="width:70px" data-orderable="false">
                                 <input class="form-check-input" type="checkbox" id="selectAllExpiredAccounts">
                             </th>
                             <th>Produk</th>
@@ -383,12 +385,12 @@ document.addEventListener('DOMContentLoaded', function () {
     checks.forEach(function (check) {
         check.addEventListener('change', refreshBulkEdit);
     });
-    if (selectAll) {
-        selectAll.addEventListener('change', function () {
-            checks.forEach(function (check) { check.checked = selectAll.checked; });
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'selectAllExpiredAccounts') {
+            checks.forEach(function (check) { check.checked = e.target.checked; });
             refreshBulkEdit();
-        });
-    }
+        }
+    });
     refreshBulkEdit();
 
     function fillManualDate(select, force) {
