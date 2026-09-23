@@ -314,6 +314,7 @@ foreach ($rows as $account) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const checks = Array.from(document.querySelectorAll('.expired-account-check'));
     const selectAll = document.getElementById('selectAllExpiredAccounts');
     const bulkButton = document.getElementById('bulkEditButton');
     const bulkCount = document.getElementById('bulkEditCount');
@@ -325,9 +326,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const bulkDeleteModalCount = document.getElementById('bulkDeleteExpiredModalCount');
     const bulkDeleteInputs = document.getElementById('bulkDeleteExpiredSelectedInputs');
     const bulkDeletePreview = document.getElementById('bulkDeleteExpiredPreview');
-    
-    // Map to store selected items: key = id, value = data object
-    const selectedAccounts = new Map();
+
+    function selectedChecks() {
+        return checks.filter(function (check) { return check.checked; });
+    }
+
+    function getVisibleChecks() {
+        return checks.filter(function (check) {
+            return check.closest('tbody') !== null && (check.offsetWidth > 0 || check.offsetHeight > 0);
+        });
+    }
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, function (char) {
@@ -335,55 +343,44 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function getVisibleChecks() {
-        return Array.from(document.querySelectorAll('.datatable tbody .expired-account-check')).filter(function(check) {
-            return check.offsetParent !== null;
-        });
-    }
-
     function refreshBulkEdit() {
-        const count = selectedAccounts.size;
-        if (bulkCount) bulkCount.textContent = count;
-        if (bulkModalCount) bulkModalCount.textContent = count;
-        if (bulkButton) bulkButton.disabled = count === 0;
+        const selected = selectedChecks();
+        if (bulkCount) bulkCount.textContent = selected.length;
+        if (bulkModalCount) bulkModalCount.textContent = selected.length;
+        if (bulkButton) bulkButton.disabled = selected.length === 0;
 
-        if (bulkDeleteCount) bulkDeleteCount.textContent = count;
-        if (bulkDeleteModalCount) bulkDeleteModalCount.textContent = count;
-        if (bulkDeleteButton) bulkDeleteButton.disabled = count === 0;
+        if (bulkDeleteCount) bulkDeleteCount.textContent = selected.length;
+        if (bulkDeleteModalCount) bulkDeleteModalCount.textContent = selected.length;
+        if (bulkDeleteButton) bulkDeleteButton.disabled = selected.length === 0;
 
         const visibleChecks = getVisibleChecks();
-        if (selectAll && visibleChecks.length > 0) {
-            const checkedVisible = visibleChecks.filter(function(c) { return c.checked; }).length;
-            selectAll.checked = checkedVisible === visibleChecks.length;
-            selectAll.indeterminate = checkedVisible > 0 && checkedVisible < visibleChecks.length;
-        } else if (selectAll) {
-            selectAll.checked = false;
-            selectAll.indeterminate = false;
+        if (selectAll) {
+            const checkedVisible = visibleChecks.filter(function(c) { return c.checked; });
+            selectAll.checked = visibleChecks.length > 0 && checkedVisible.length === visibleChecks.length;
+            selectAll.indeterminate = checkedVisible.length > 0 && checkedVisible.length < visibleChecks.length;
         }
         
-        const selectedValues = Array.from(selectedAccounts.values());
-        
         if (bulkDeleteInputs) {
-            bulkDeleteInputs.innerHTML = count ? selectedValues.map(function (data) {
-                return `<input type="hidden" name="account_ids[]" value="${escapeHtml(data.id)}">`;
+            bulkDeleteInputs.innerHTML = selected.length ? selected.map(function (check) {
+                return `<input type="hidden" name="account_ids[]" value="${escapeHtml(check.value)}">`;
             }).join('') : '';
         }
         
         if (bulkDeletePreview) {
-            bulkDeletePreview.innerHTML = count ? selectedValues.slice(0, 8).map(function (data) {
-                const product = escapeHtml(data.product || 'Tanpa Produk');
-                const email = escapeHtml(data.email || '');
+            bulkDeletePreview.innerHTML = selected.length ? selected.slice(0, 8).map(function (check) {
+                const product = escapeHtml(check.dataset.product || 'Tanpa Produk');
+                const email = escapeHtml(check.dataset.email || '');
                 return `<li>${product}${email ? ` - ${email}` : ''}</li>`;
-            }).join('') + (count > 8 ? `<li>dan ${count - 8} akun lainnya...</li>` : '') : '';
+            }).join('') + (selected.length > 8 ? `<li>dan ${selected.length - 8} akun lainnya...</li>` : '') : '';
         }
 
         if (bulkSelectedInputs) {
-            bulkSelectedInputs.innerHTML = count ? selectedValues.map(function (data) {
-                const id = escapeHtml(data.id);
-                const product = escapeHtml(data.product || 'Tanpa Produk');
-                const variation = escapeHtml(data.variation || '');
-                const email = escapeHtml(data.email || '');
-                const password = escapeHtml(data.password || '');
+            bulkSelectedInputs.innerHTML = selected.length ? selected.map(function (check) {
+                const id = escapeHtml(check.value);
+                const product = escapeHtml(check.dataset.product || 'Tanpa Produk');
+                const variation = escapeHtml(check.dataset.variation || '');
+                const email = escapeHtml(check.dataset.email || '');
+                const password = escapeHtml(check.dataset.password || '');
                 return `<tr>
                     <td>
                         <input type="hidden" name="account_ids[]" value="${id}">
@@ -399,37 +396,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('change', function (e) {
         if (e.target && e.target.id === 'selectAllExpiredAccounts') {
             const visibleChecks = getVisibleChecks();
-            visibleChecks.forEach(function (check) { 
-                check.checked = e.target.checked; 
-                // manually trigger the logic for each check
-                const id = check.value;
-                if (check.checked) {
-                    selectedAccounts.set(id, {
-                        id: id,
-                        product: check.dataset.product,
-                        variation: check.dataset.variation,
-                        email: check.dataset.email,
-                        password: check.dataset.password
-                    });
-                } else {
-                    selectedAccounts.delete(id);
-                }
-            });
+            visibleChecks.forEach(function (check) { check.checked = e.target.checked; });
             refreshBulkEdit();
         } else if (e.target && e.target.classList.contains('expired-account-check')) {
-            const check = e.target;
-            const id = check.value;
-            if (check.checked) {
-                selectedAccounts.set(id, {
-                    id: id,
-                    product: check.dataset.product,
-                    variation: check.dataset.variation,
-                    email: check.dataset.email,
-                    password: check.dataset.password
-                });
-            } else {
-                selectedAccounts.delete(id);
-            }
             refreshBulkEdit();
         }
     });
@@ -437,25 +406,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const tbody = document.querySelector('.datatable tbody');
     if (tbody) {
         new MutationObserver(function() {
-            // When simple-datatables changes page, restore checked state of visible rows
-            const visibleChecks = getVisibleChecks();
-            let changed = false;
-            visibleChecks.forEach(function (check) {
-                const id = check.value;
-                if (selectedAccounts.has(id)) {
-                    if (!check.checked) {
-                        check.checked = true;
-                        changed = true;
-                    }
-                } else {
-                    if (check.checked) {
-                        check.checked = false;
-                        changed = true;
-                    }
-                }
-            });
             refreshBulkEdit();
-        }).observe(tbody, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+        }).observe(tbody, { childList: true, subtree: true });
     }
 
     refreshBulkEdit();
