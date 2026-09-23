@@ -319,15 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const bulkDeleteInputs = document.getElementById('bulkDeleteExpiredSelectedInputs');
     const bulkDeletePreview = document.getElementById('bulkDeleteExpiredPreview');
 
-    function selectedChecks() {
-        return checks.filter(function (check) { return check.checked; });
-    }
-
-    function getVisibleChecks() {
-        return checks.filter(function (check) {
-            return check.closest('tbody') !== null && (check.offsetWidth > 0 || check.offsetHeight > 0);
-        });
-    }
+    const selectedAccounts = new Map();
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, function (char) {
@@ -335,41 +327,51 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function refreshBulkEdit() {
-        const selected = selectedChecks();
-        if (bulkCount) bulkCount.textContent = selected.length;
-        if (bulkModalCount) bulkModalCount.textContent = selected.length;
-        if (bulkButton) bulkButton.disabled = selected.length === 0;
+    function getVisibleChecks() {
+        return Array.from(document.querySelectorAll('.datatable tbody .expired-account-check')).filter(function(check) {
+            return check.offsetParent !== null;
+        });
+    }
 
-        if (bulkDeleteCount) bulkDeleteCount.textContent = selected.length;
-        if (bulkDeleteModalCount) bulkDeleteModalCount.textContent = selected.length;
-        if (bulkDeleteButton) bulkDeleteButton.disabled = selected.length === 0;
+    function refreshBulkEdit() {
+        const count = selectedAccounts.size;
+        if (bulkCount) bulkCount.textContent = count;
+        if (bulkModalCount) bulkModalCount.textContent = count;
+        if (bulkButton) bulkButton.disabled = count === 0;
+
+        if (bulkDeleteCount) bulkDeleteCount.textContent = count;
+        if (bulkDeleteModalCount) bulkDeleteModalCount.textContent = count;
+        if (bulkDeleteButton) bulkDeleteButton.disabled = count === 0;
 
         const visibleChecks = getVisibleChecks();
-        if (selectAll) {
-            const checkedVisible = visibleChecks.filter(function(c) { return c.checked; });
-            selectAll.checked = visibleChecks.length > 0 && checkedVisible.length === visibleChecks.length;
-            selectAll.indeterminate = checkedVisible.length > 0 && checkedVisible.length < visibleChecks.length;
+        if (selectAll && visibleChecks.length > 0) {
+            const checkedVisible = visibleChecks.filter(function(c) { return c.checked; }).length;
+            selectAll.checked = checkedVisible === visibleChecks.length;
+            selectAll.indeterminate = checkedVisible > 0 && checkedVisible < visibleChecks.length;
+        } else if (selectAll) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
         }
         
+        const selectedValues = Array.from(selectedAccounts.values());
+
         if (bulkDeleteInputs) {
-            bulkDeleteInputs.innerHTML = selected.length ? selected.map(function (check) {
-                return `<input type="hidden" name="account_ids[]" value="${escapeHtml(check.value)}">`;
+            bulkDeleteInputs.innerHTML = count ? selectedValues.map(function (data) {
+                return `<input type="hidden" name="account_ids[]" value="${escapeHtml(data.id)}">`;
             }).join('') : '';
         }
         
         if (bulkDeletePreview) {
-            bulkDeletePreview.innerHTML = selected.length ? selected.slice(0, 8).map(function (check) {
-                const product = escapeHtml(check.dataset.product || 'Tanpa Produk');
-                const email = escapeHtml(check.dataset.email || '');
+            bulkDeletePreview.innerHTML = count ? selectedValues.slice(0, 8).map(function (data) {
+                const product = escapeHtml(data.product || 'Tanpa Produk');
+                const email = escapeHtml(data.email || '');
                 return `<li>${product}${email ? ` - ${email}` : ''}</li>`;
-            }).join('') + (selected.length > 8 ? `<li>dan ${selected.length - 8} akun lainnya...</li>` : '') : '';
+            }).join('') + (count > 8 ? `<li>dan ${count - 8} akun lainnya...</li>` : '') : '';
         }
 
         if (bulkSelectedInputs) {
-            bulkSelectedInputs.innerHTML = selected.length ? selected.map(function (check) {
-                const id = escapeHtml(check.value);
-                return `<input type="hidden" name="account_ids[]" value="${id}">`;
+            bulkSelectedInputs.innerHTML = count ? selectedValues.map(function (data) {
+                return `<input type="hidden" name="account_ids[]" value="${escapeHtml(data.id)}">`;
             }).join('') : '';
         }
     }
@@ -377,9 +379,32 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('change', function (e) {
         if (e.target && e.target.id === 'selectAllExpiredAccounts') {
             const visibleChecks = getVisibleChecks();
-            visibleChecks.forEach(function (check) { check.checked = e.target.checked; });
+            visibleChecks.forEach(function (check) { 
+                check.checked = e.target.checked; 
+                const id = check.value;
+                if (check.checked) {
+                    selectedAccounts.set(id, {
+                        id: id,
+                        product: check.dataset.product,
+                        email: check.dataset.email
+                    });
+                } else {
+                    selectedAccounts.delete(id);
+                }
+            });
             refreshBulkEdit();
         } else if (e.target && e.target.classList.contains('expired-account-check')) {
+            const check = e.target;
+            const id = check.value;
+            if (check.checked) {
+                selectedAccounts.set(id, {
+                    id: id,
+                    product: check.dataset.product,
+                    email: check.dataset.email
+                });
+            } else {
+                selectedAccounts.delete(id);
+            }
             refreshBulkEdit();
         }
     });
@@ -387,12 +412,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const table = document.querySelector('.datatable');
     if (table) {
         new MutationObserver(function() {
+            const visibleChecks = getVisibleChecks();
+            visibleChecks.forEach(function (check) {
+                const id = check.value;
+                if (selectedAccounts.has(id)) {
+                    if (!check.checked) check.checked = true;
+                } else {
+                    if (check.checked) check.checked = false;
+                }
+            });
             refreshBulkEdit();
         }).observe(table, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
     }
     document.addEventListener('click', function(e) {
         if (e.target.closest('.dataTable-pagination') || e.target.closest('.datatable-pagination') || e.target.closest('.dataTable-sorter') || e.target.closest('.datatable-sorter')) {
-            setTimeout(refreshBulkEdit, 50);
+            setTimeout(function() {
+                const visibleChecks = getVisibleChecks();
+                visibleChecks.forEach(function (check) {
+                    const id = check.value;
+                    if (selectedAccounts.has(id)) {
+                        if (!check.checked) check.checked = true;
+                    } else {
+                        if (check.checked) check.checked = false;
+                    }
+                });
+                refreshBulkEdit();
+            }, 50);
         }
     });
 
