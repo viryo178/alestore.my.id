@@ -388,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tbody) {
         new MutationObserver(function() {
             refreshBulkEdit();
-        }).observe(tbody, { childList: true, subtree: true });
+        }).observe(tbody, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
     }
 
     refreshBulkEdit();
