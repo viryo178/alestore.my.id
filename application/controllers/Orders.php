@@ -16,8 +16,7 @@ class Orders extends MY_Controller
             ->join('shopee_stores s', 's.id = o.shopee_store_id', 'left')
             ->join('customers c', 'c.id = o.customer_id', 'left')
             ->join('users u', 'u.id = o.user_id', 'left')
-            ->order_by('o.created_at', 'DESC')
-            ->limit(500);
+            ->order_by('o.created_at', 'DESC');
 
         if ($this->input->get('q')) {
             $q = $this->input->get('q', true);
