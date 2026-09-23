@@ -384,12 +384,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const tbody = document.querySelector('.datatable tbody');
-    if (tbody) {
+    const table = document.querySelector('.datatable');
+    if (table) {
         new MutationObserver(function() {
             refreshBulkEdit();
-        }).observe(tbody, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+        }).observe(table, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
     }
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.dataTable-pagination') || e.target.closest('.datatable-pagination') || e.target.closest('.dataTable-sorter') || e.target.closest('.datatable-sorter')) {
+            setTimeout(refreshBulkEdit, 50);
+        }
+    });
 
     refreshBulkEdit();
 
