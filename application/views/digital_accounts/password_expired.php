@@ -331,6 +331,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return checks.filter(function (check) { return check.checked; });
     }
 
+    function getVisibleChecks() {
+        return checks.filter(function (check) {
+            return check.closest('tbody') !== null && (!check.closest('tr') || check.closest('tr').style.display !== 'none');
+        });
+    }
+
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, function (char) {
             return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char];
@@ -347,7 +353,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bulkDeleteModalCount) bulkDeleteModalCount.textContent = selected.length;
         if (bulkDeleteButton) bulkDeleteButton.disabled = selected.length === 0;
 
-        if (selectAll) selectAll.checked = checks.length > 0 && selected.length === checks.length;
+        const visibleChecks = getVisibleChecks();
+        if (selectAll) {
+            const checkedVisible = visibleChecks.filter(function(c) { return c.checked; });
+            selectAll.checked = visibleChecks.length > 0 && checkedVisible.length === visibleChecks.length;
+            selectAll.indeterminate = checkedVisible.length > 0 && checkedVisible.length < visibleChecks.length;
+        }
         
         if (bulkDeleteInputs) {
             bulkDeleteInputs.innerHTML = selected.length ? selected.map(function (check) {
@@ -382,15 +393,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    checks.forEach(function (check) {
-        check.addEventListener('change', refreshBulkEdit);
-    });
     document.addEventListener('change', function (e) {
         if (e.target && e.target.id === 'selectAllExpiredAccounts') {
-            checks.forEach(function (check) { check.checked = e.target.checked; });
+            const visibleChecks = getVisibleChecks();
+            visibleChecks.forEach(function (check) { check.checked = e.target.checked; });
+            refreshBulkEdit();
+        } else if (e.target && e.target.classList.contains('expired-account-check')) {
             refreshBulkEdit();
         }
     });
+
+    const tbody = document.querySelector('.datatable tbody');
+    if (tbody) {
+        new MutationObserver(function() {
+            refreshBulkEdit();
+        }).observe(tbody, { childList: true, subtree: true });
+    }
+
     refreshBulkEdit();
 
     function fillManualDate(select, force) {
