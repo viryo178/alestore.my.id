@@ -246,7 +246,7 @@ foreach ($rows as $account) {
                             <label class="form-label">Tanggal Manual</label>
                             <input class="form-control" type="datetime-local" name="expired_at" value="">
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label">Status Setelah Diganti</label>
                             <select name="status" class="form-select">
                                 <option value="available">Tersedia</option>
@@ -257,31 +257,23 @@ foreach ($rows as $account) {
                                 <option value="deactived">Deactived</option>
                             </select>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Data Akun Terpilih</label>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Produk</th>
-                                            <th>Username</th>
-                                            <th>Password</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bulkSelectedInputs">
-                                        <tr><td colspan="3" class="text-muted">Belum ada akun dipilih.</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username (Opsional)</label>
+                            <input class="form-control" type="text" name="bulk_email" placeholder="Kosongkan jika tidak diubah">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password (Opsional)</label>
+                            <input class="form-control" type="text" name="bulk_password" placeholder="Kosongkan jika tidak diubah">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Catatan</label>
                             <textarea name="notes" class="form-control" rows="3" placeholder="Catatan ini akan diterapkan ke semua akun terpilih. Kosongkan jika tidak ingin mengubah catatan."></textarea>
                             <div class="form-text">Catatan diterapkan ke semua akun yang dipilih.</div>
                         </div>
+                        <div id="bulkSelectedInputs" style="display:none;"></div>
                         <div class="col-12">
                             <div class="alert alert-primary py-2 mb-0">
-                                <i class="bi bi-info-circle"></i> Expired dan status akan diterapkan ke semua akun terpilih. Password hanya diganti jika barisnya diisi.
+                                <i class="bi bi-info-circle"></i> Input di atas akan diterapkan ke semua akun terpilih jika diisi.
                             </div>
                         </div>
                     </div>
@@ -377,19 +369,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bulkSelectedInputs) {
             bulkSelectedInputs.innerHTML = selected.length ? selected.map(function (check) {
                 const id = escapeHtml(check.value);
-                const product = escapeHtml(check.dataset.product || 'Tanpa Produk');
-                const variation = escapeHtml(check.dataset.variation || '');
-                const email = escapeHtml(check.dataset.email || '');
-                const password = escapeHtml(check.dataset.password || '');
-                return `<tr>
-                    <td>
-                        <input type="hidden" name="account_ids[]" value="${id}">
-                        <strong>${product}</strong>${variation ? `<span class="row-subtext">${variation}</span>` : ''}
-                    </td>
-                    <td><input class="form-control" type="text" name="emails[${id}]" value="${email}" placeholder="Username"></td>
-                    <td><input class="form-control" type="text" name="passwords[${id}]" value="${password}" placeholder="Password"></td>
-                </tr>`;
-            }).join('') : '<tr><td colspan="3" class="text-muted">Belum ada akun dipilih.</td></tr>';
+                return `<input type="hidden" name="account_ids[]" value="${id}">`;
+            }).join('') : '';
         }
     }
 

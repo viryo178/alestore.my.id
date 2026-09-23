@@ -216,16 +216,25 @@ class Digital_accounts extends MY_Controller
             $data['notes'] = $bulkNotes;
         }
 
+        $bulkEmail = trim((string) $this->input->post('bulk_email', true));
+        $bulkPassword = trim((string) $this->input->post('bulk_password', false));
+        if ($bulkEmail !== '') {
+            $data['email'] = $bulkEmail;
+        }
+        if ($bulkPassword !== '') {
+            $data['password'] = $bulkPassword;
+        }
+
         $emails = (array) $this->input->post('emails', true);
         $passwords = (array) $this->input->post('passwords', false);
         $updated = 0;
 
         foreach ($ids as $id) {
             $payload = $data;
-            if (isset($emails[$id])) {
+            if (isset($emails[$id]) && trim((string) $emails[$id]) !== '') {
                 $payload['email'] = trim((string) $emails[$id]);
             }
-            if (isset($passwords[$id])) {
+            if (isset($passwords[$id]) && trim((string) $passwords[$id]) !== '') {
                 $payload['password'] = trim((string) $passwords[$id]);
             }
 
