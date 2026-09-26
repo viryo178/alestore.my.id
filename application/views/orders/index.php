@@ -103,7 +103,7 @@ foreach ($variations as $variation) {
                     </div>
                     
                     <div class="datatable-search">
-                        <input type="text" name="q" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search..." style="background:#080b14!important; border-color:#314266!important; color:#fff!important;" oninput="clearTimeout(window.searchTimeout); window.searchTimeout = setTimeout(() => document.getElementById('tableToolbarForm').submit(), 500);">
+                        <input type="text" name="q" id="liveSearchInput" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search..." style="background:#080b14!important; border-color:#314266!important; color:#fff!important;" autocomplete="off">
                     </div>
                 </form>
             </div>
@@ -762,5 +762,49 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     rows.querySelectorAll('.quick-order-row').forEach(filterVariations);
+    
+    var searchInput = document.getElementById('liveSearchInput');
+    var searchTimeout;
+    if (searchInput) {
+        var len = searchInput.value.length;
+        if (len > 0) {
+            searchInput.focus();
+            searchInput.setSelectionRange(len, len);
+        }
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            var query = this.value;
+            searchTimeout = setTimeout(function() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('q', query);
+                url.searchParams.set('page', 1);
+                fetch(url.toString())
+                    .then(res => res.text())
+                    .then(html => {
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(html, 'text/html');
+                        var newTableBody = doc.querySelector('.orders-table tbody');
+                        if (newTableBody) document.querySelector('.orders-table tbody').innerHTML = newTableBody.innerHTML;
+                        
+                        var newPagination = doc.querySelector('.pagination');
+                        var oldPagination = document.querySelector('.pagination');
+                        if (newPagination && oldPagination) {
+                            oldPagination.innerHTML = newPagination.innerHTML;
+                        } else if (newPagination && !oldPagination) {
+                            var nav = document.createElement('nav');
+                            nav.className = 'mt-4';
+                            nav.appendChild(newPagination);
+                            document.querySelector('.table-responsive').after(nav);
+                        } else if (!newPagination && oldPagination) {
+                            oldPagination.closest('nav').remove();
+                        }
+                        
+                        var newLength = doc.querySelector('.datatable-length span.text-muted');
+                        if (newLength) document.querySelector('.datatable-length span.text-muted').innerHTML = newLength.innerHTML;
+                        window.history.replaceState({}, '', url.toString());
+                    });
+            }, 500);
+        });
+    }
 });
 </script>
