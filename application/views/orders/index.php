@@ -48,7 +48,7 @@ foreach ($variations as $variation) {
     .orders-page .quick-order-modal .modal-dialog{max-width:min(1640px,calc(100vw - 24px))}
     .orders-page .quick-order-table{min-width:1530px}.orders-page .quick-order-table th{color:#7f96bb;font-size:11px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}.orders-page .quick-order-table td{vertical-align:middle}
     .orders-page .quick-order-table .form-control,.orders-page .quick-order-table .form-select{min-height:34px}.orders-page .quick-order-index{color:#7f96bb;min-width:24px}
-    .orders-page .pagination .page-link{background:#1d2236;border-color:rgba(86,126,214,.28);color:#7f96bb}.orders-page .pagination .page-item.active .page-link{background:rgba(47,124,255,.16);border-color:rgba(92,142,255,.48);color:#fff}.orders-page .pagination .page-item.disabled .page-link{background:#0f1322;color:#475a77;border-color:rgba(86,126,214,.15)}.orders-page .pagination .page-link:hover:not(.disabled){background:#262d47;color:#fff}
+    .orders-page .pagination{gap:6px}.orders-page .pagination .page-item{margin:0}.orders-page .pagination .page-link{background:#0f1524;border-color:#1a233a;color:#7f96bb;border-radius:6px!important;min-width:34px;height:34px;display:inline-flex;justify-content:center;align-items:center;padding:0 10px}.orders-page .pagination .page-item.active .page-link{background:#2962ff;border-color:#2962ff;color:#fff}.orders-page .pagination .page-item.disabled .page-link{background:#0b0f19;color:#3b4b68;border-color:#111827}.orders-page .pagination .page-link:hover:not(.disabled){background:#1a233a;color:#fff}
     @media (max-width:767.98px){.orders-page .order-toolbar{align-items:stretch;flex-direction:column}.orders-page .order-actions{justify-content:flex-start}}
 </style>
 
@@ -151,16 +151,24 @@ foreach ($variations as $variation) {
                 $getParams = $this->input->get();
             ?>
             <nav class="mt-4">
-                <ul class="pagination justify-content-end">
+                <ul class="pagination justify-content-end align-items-center">
                     <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
                         <?php $getParams['page'] = $page - 1; ?>
-                        <a class="page-link" href="?<?= http_build_query($getParams) ?>">Previous</a>
+                        <a class="page-link" href="?<?= http_build_query($getParams) ?>"><i class="bi bi-chevron-left"></i></a>
                     </li>
                     
                     <?php 
                     $startPage = max(1, $page - 2);
                     $endPage = min($totalPages, $page + 2);
                     
+                    if ($startPage > 1) {
+                        $getParams['page'] = 1;
+                        echo '<li class="page-item"><a class="page-link" href="?'.http_build_query($getParams).'">1</a></li>';
+                        if ($startPage > 2) {
+                            echo '<li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted" style="background:transparent!important;">...</span></li>';
+                        }
+                    }
+
                     for ($i = $startPage; $i <= $endPage; $i++): 
                         $getParams['page'] = $i;
                     ?>
@@ -168,10 +176,20 @@ foreach ($variations as $variation) {
                             <a class="page-link" href="?<?= http_build_query($getParams) ?>"><?= $i ?></a>
                         </li>
                     <?php endfor; ?>
+
+                    <?php
+                    if ($endPage < $totalPages) {
+                        if ($endPage < $totalPages - 1) {
+                            echo '<li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted" style="background:transparent!important;">...</span></li>';
+                        }
+                        $getParams['page'] = $totalPages;
+                        echo '<li class="page-item"><a class="page-link" href="?'.http_build_query($getParams).'">'.$totalPages.'</a></li>';
+                    }
+                    ?>
                     
                     <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
                         <?php $getParams['page'] = $page + 1; ?>
-                        <a class="page-link" href="?<?= http_build_query($getParams) ?>">Next</a>
+                        <a class="page-link" href="?<?= http_build_query($getParams) ?>"><i class="bi bi-chevron-right"></i></a>
                     </li>
                 </ul>
             </nav>
