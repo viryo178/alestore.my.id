@@ -83,8 +83,24 @@ foreach ($variations as $variation) {
 
     <div class="card datatable-card">
         <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="datatable-length">
+                    <span class="text-muted">Menampilkan <?= count($rows) ?> dari <?= number_format($total) ?> order</span>
+                </div>
+                <div class="datatable-search">
+                    <form method="GET" action="">
+                        <?php foreach($this->input->get() as $k => $v): if($k != 'q' && $k != 'page'): ?>
+                            <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
+                        <?php endif; endforeach; ?>
+                        <div class="input-group">
+                            <input type="text" name="q" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search...">
+                            <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
             <div class="table-responsive">
-                <table class="table datatable align-middle orders-table">
+                <table class="table align-middle orders-table">
                     <thead><tr><th>No. Pesanan</th><th>Buyer</th><th>Toko</th><th>Produk</th><th>Akun Diberikan</th><th>Tipe</th><th>Harga</th><th>Expired</th><th>Admin</th><th>Tanggal</th><th>Renewal</th><th>Refund</th><th class="text-end">Aksi</th></tr></thead>
                     <tbody>
                     <?php if ($rows): foreach ($rows as $order): ?>
@@ -120,6 +136,38 @@ foreach ($variations as $variation) {
                     </tbody>
                 </table>
             </div>
+            
+            <?php
+            $totalPages = ceil($total / $limit);
+            if ($totalPages > 1):
+                $getParams = $this->input->get();
+            ?>
+            <nav class="mt-4">
+                <ul class="pagination justify-content-end">
+                    <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                        <?php $getParams['page'] = $page - 1; ?>
+                        <a class="page-link" href="?<?= http_build_query($getParams) ?>">Previous</a>
+                    </li>
+                    
+                    <?php 
+                    $startPage = max(1, $page - 2);
+                    $endPage = min($totalPages, $page + 2);
+                    
+                    for ($i = $startPage; $i <= $endPage; $i++): 
+                        $getParams['page'] = $i;
+                    ?>
+                        <li class="page-item <?= $i == $page ? 'active' : '' ?>">
+                            <a class="page-link" href="?<?= http_build_query($getParams) ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                        <?php $getParams['page'] = $page + 1; ?>
+                        <a class="page-link" href="?<?= http_build_query($getParams) ?>">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            <?php endif; ?>
         </div>
     </div>
 

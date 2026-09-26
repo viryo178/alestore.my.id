@@ -55,7 +55,18 @@ class Orders extends MY_Controller
             $this->db->where('DATE(o.created_at) <=', $this->input->get('to', true));
         }
 
-        $rows = $this->db->get()->result();
+        $total = $this->db->count_all_results('', false);
+
+        $limit = 20;
+        $page = (int) $this->input->get('page');
+
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $offset = ($page - 1) * $limit;
+
+        $rows = $this->db->limit($limit, $offset)->get()->result();
 
         $products = $this->order_products();
         $variations = $this->order_variations();
@@ -74,6 +85,9 @@ class Orders extends MY_Controller
         $data = array(
             'title' => 'Orders',
             'rows' => $rows,
+            'total' => $total,
+            'limit' => $limit,
+            'page' => $page,
             'stores' => $this->App_model->all('shopee_stores', 'shop_name ASC'),
             'admins' => $this->db->table_exists('users') ? $this->App_model->all('users', 'name ASC') : array(),
             'products' => $products,
