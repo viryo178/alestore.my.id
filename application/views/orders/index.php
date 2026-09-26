@@ -103,10 +103,7 @@ foreach ($variations as $variation) {
                     </div>
                     
                     <div class="datatable-search">
-                        <div class="input-group">
-                            <input type="text" name="q" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search..." style="background:#080b14!important; border-color:#314266!important; color:#fff!important;">
-                            <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
-                        </div>
+                        <input type="text" name="q" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search..." style="background:#080b14!important; border-color:#314266!important; color:#fff!important;" oninput="clearTimeout(window.searchTimeout); window.searchTimeout = setTimeout(() => document.getElementById('tableToolbarForm').submit(), 500);">
                     </div>
                 </form>
             </div>
