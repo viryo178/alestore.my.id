@@ -46,6 +46,7 @@ foreach ($variations as $variation) {
     .orders-page .quick-order-modal .modal-dialog{max-width:min(1640px,calc(100vw - 24px))}
     .orders-page .quick-order-table{min-width:1530px}.orders-page .quick-order-table th{color:#7f96bb;font-size:11px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}.orders-page .quick-order-table td{vertical-align:middle}
     .orders-page .quick-order-table .form-control,.orders-page .quick-order-table .form-select{min-height:34px}.orders-page .quick-order-index{color:#7f96bb;min-width:24px}
+    .orders-page .pagination .page-link{background:#1d2236;border-color:rgba(86,126,214,.28);color:#7f96bb}.orders-page .pagination .page-item.active .page-link{background:rgba(47,124,255,.16);border-color:rgba(92,142,255,.48);color:#fff}.orders-page .pagination .page-item.disabled .page-link{background:#0f1322;color:#475a77;border-color:rgba(86,126,214,.15)}.orders-page .pagination .page-link:hover:not(.disabled){background:#262d47;color:#fff}
     @media (max-width:767.98px){.orders-page .order-toolbar{align-items:stretch;flex-direction:column}.orders-page .order-actions{justify-content:flex-start}}
 </style>
 
