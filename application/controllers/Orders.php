@@ -57,7 +57,10 @@ class Orders extends MY_Controller
 
         $total = $this->db->count_all_results('', false);
 
-        $limit = 10;
+        $limit = (int) $this->input->get('limit');
+        if ($limit < 1) {
+            $limit = 10;
+        }
         $page = (int) $this->input->get('page');
 
         if ($page < 1) {

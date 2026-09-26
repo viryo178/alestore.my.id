@@ -40,6 +40,8 @@ foreach ($variations as $variation) {
     .orders-page .manual-order-modal .modal-title,.orders-page .manual-order-modal h5,.orders-page .manual-order-modal strong{color:#f8fbff!important}
     .orders-page .manual-order-modal .modal-body{background:#071b31!important;scrollbar-width:none;-ms-overflow-style:none}
     .orders-page .manual-order-modal .modal-body::-webkit-scrollbar{display:none;height:0;width:0}
+    .orders-page .table-responsive{scrollbar-width:none;-ms-overflow-style:none}
+    .orders-page .table-responsive::-webkit-scrollbar{display:none;height:0;width:0}
     .orders-page .manual-order-modal .manual-order-card,.orders-page .manual-order-modal .manual-stock-card{background:#071b31!important;border-color:#142d49!important}
     .orders-page .manual-order-modal .form-control,.orders-page .manual-order-modal .form-select{background:#061426!important;border-color:#142d49!important;color:#f8fbff!important}
     .orders-page .manual-order-modal .btn-close{filter:invert(1) grayscale(100%) brightness(180%);opacity:.8}
@@ -84,21 +86,29 @@ foreach ($variations as $variation) {
 
     <div class="card datatable-card">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="datatable-length">
-                    <span class="text-muted">Menampilkan <?= count($rows) ?> dari <?= number_format($total) ?> order</span>
-                </div>
-                <div class="datatable-search">
-                    <form method="GET" action="">
-                        <?php foreach($this->input->get() as $k => $v): if($k != 'q' && $k != 'page'): ?>
-                            <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
-                        <?php endif; endforeach; ?>
+            <div class="mb-3">
+                <form method="GET" action="" id="tableToolbarForm" class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                    <?php foreach($this->input->get() as $k => $v): if($k != 'q' && $k != 'limit' && $k != 'page'): ?>
+                        <input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>">
+                    <?php endif; endforeach; ?>
+                    
+                    <div class="datatable-length d-flex align-items-center gap-2 text-muted" style="font-size:14px;">
+                        <select name="limit" class="form-select form-select-sm" onchange="document.getElementById('tableToolbarForm').submit();" style="width:70px; background:#080b14!important; border-color:#314266!important; color:#fff!important;">
+                            <option value="10" <?= $limit == 10 ? 'selected' : '' ?>>10</option>
+                            <option value="25" <?= $limit == 25 ? 'selected' : '' ?>>25</option>
+                            <option value="50" <?= $limit == 50 ? 'selected' : '' ?>>50</option>
+                            <option value="100" <?= $limit == 100 ? 'selected' : '' ?>>100</option>
+                        </select>
+                        <span>entries per page</span>
+                    </div>
+                    
+                    <div class="datatable-search">
                         <div class="input-group">
-                            <input type="text" name="q" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search...">
+                            <input type="text" name="q" class="form-control" value="<?= h($this->input->get('q')); ?>" placeholder="Search..." style="background:#080b14!important; border-color:#314266!important; color:#fff!important;">
                             <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle orders-table">
